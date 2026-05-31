@@ -668,6 +668,23 @@ function ItemDetail({ item, rooms, categories, allRooms, allCategories, onClose,
     setEditTitle(false);
   };
 
+  // Tags auto-save: toggling a room/category persists immediately (no Save button).
+  // Junction tables have composite PKs, so add uses upsert+ignoreDuplicates.
+  const toggleRoom = async (rid) => {
+    const has = selectedRooms.includes(rid);
+    setSelectedRooms(prev => has ? prev.filter(x => x !== rid) : [...prev, rid]);
+    item.room_ids = has ? (item.room_ids || []).filter(x => x !== rid) : [...(item.room_ids || []), rid];
+    if (has) await supabase.from('item_rooms').delete().eq('item_id', item.id).eq('room_id', rid);
+    else await supabase.from('item_rooms').upsert({ item_id: item.id, room_id: rid }, { onConflict: 'item_id,room_id', ignoreDuplicates: true });
+  };
+  const toggleCat = async (cid) => {
+    const has = selectedCats.includes(cid);
+    setSelectedCats(prev => has ? prev.filter(x => x !== cid) : [...prev, cid]);
+    item.category_ids = has ? (item.category_ids || []).filter(x => x !== cid) : [...(item.category_ids || []), cid];
+    if (has) await supabase.from('item_categories').delete().eq('item_id', item.id).eq('category_id', cid);
+    else await supabase.from('item_categories').upsert({ item_id: item.id, category_id: cid }, { onConflict: 'item_id,category_id', ignoreDuplicates: true });
+  };
+
   // Media element shown in the left pane. Reels/posts/youtube embed live;
   // unembeddable IG items show a fallback card; photos show the image. Everything
   // is sized to fit its frame (object-contain / capped widths).
@@ -700,7 +717,7 @@ function ItemDetail({ item, rooms, categories, allRooms, allCategories, onClose,
         );
       }
       return (
-        <div className="w-full max-w-[420px]">
+        <div className="w-full max-w-[600px]">
           <InstaEmbed src={eUrl} type={item.content_type}/>
         </div>
       );
@@ -731,112 +748,84 @@ function ItemDetail({ item, rooms, categories, allRooms, allCategories, onClose,
           <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl ml-4">&times;</button>
         </div>
 
-        {/* BODY — single scroll on mobile; media (left) | details (right) two-pane on desktop */}
-        <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] lg:grid-rows-[auto_minmax(0,1fr)]">
+        {/* BODY — single scroll on mobile; 3 columns on desktop: media | tags | rating+comments */}
+        <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px_340px] lg:grid-rows-[auto_minmax(0,1fr)]">
 
-        {/* RATING + TAGS — top of right column (desktop) / above media (mobile) */}
-        <div className="p-4 space-y-3 lg:col-start-2 lg:row-start-1 lg:border-l lg:border-dark-700">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-dark-500 mb-1">Your rating</p>
-              <StarRating rating={myRating} size="lg" onRate={(r) => onRate(item.id, r)}/>
-            </div>
-            <button onClick={() => editTags ? saveTags() : setEditTags(true)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editTags ? 'bg-accent text-white' : 'bg-dark-700 hover:bg-dark-600 text-dark-200'}`}>
-              {editTags ? '✓ Save tags' : '✏️ Edit tags'}
-            </button>
+        {/* RATING — col 3 top (desktop) / first on mobile */}
+        <div className="p-4 space-y-3 lg:col-start-3 lg:row-start-1 lg:border-l lg:border-dark-700">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-dark-500 mb-1">Your rating</p>
+            <StarRating rating={myRating} size="lg" onRate={(r) => onRate(item.id, r)}/>
           </div>
-          {editTags ? (
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-dark-400 mb-1">Rooms:</p>
-                <div className="flex flex-wrap gap-1">
-                  {allRooms.map(r => (
-                    <button key={r.id}
-                      onClick={() => setSelectedRooms(prev => prev.includes(r.id) ? prev.filter(x=>x!==r.id) : [...prev, r.id])}
-                      className={`tag-pill ${selectedRooms.includes(r.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
-                      {r.icon} {r.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-dark-400 mb-1">Categories:</p>
-                <div className="flex flex-wrap gap-1">
-                  {allCategories.map(c => (
-                    <button key={c.id}
-                      onClick={() => setSelectedCats(prev => prev.includes(c.id) ? prev.filter(x=>x!==c.id) : [...prev, c.id])}
-                      className={`tag-pill ${selectedCats.includes(c.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
-                      {c.icon} {c.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-1">
-              {allRooms.filter(r => selectedRooms.includes(r.id)).map(r => (
-                <span key={r.id} className="tag-pill bg-dark-700 text-dark-200">{r.icon} {r.name}</span>
-              ))}
-              {allCategories.filter(c => selectedCats.includes(c.id)).map(c => (
-                <span key={c.id} className="tag-pill bg-accent/10 text-accent">{c.icon} {c.name}</span>
-              ))}
-              {selectedRooms.length === 0 && selectedCats.length === 0 && (
-                <span className="text-dark-500 text-sm">No tags yet — tap "Edit tags" to categorize</span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* MEDIA PANE — left column, spans both rows on desktop; sits below rating+tags on mobile */}
-        <div className="bg-black relative flex items-center justify-center p-3 sm:p-4 lg:col-start-1 lg:row-start-1 lg:row-span-2 lg:h-full lg:overflow-y-auto">
-          <button onClick={toggleFullscreen} aria-label="Toggle fullscreen"
-            className="absolute top-3 right-3 z-10 w-9 h-9 rounded-lg bg-dark-900/70 hover:bg-dark-900 text-white flex items-center justify-center text-lg backdrop-blur-sm">
-            {isFs ? '🗗' : '⛶'}
-          </button>
-          <div ref={mediaRef} className="media-fs w-full flex items-center justify-center">
-            {mediaInner}
-          </div>
-        </div>
-
-        {/* DETAILS — right column lower row (desktop) / below media (mobile) */}
-        <div className="lg:col-start-2 lg:row-start-2 lg:border-l lg:border-dark-700 lg:overflow-y-auto">
-
-        {/* Original link */}
-        {item.url && (
-          <div className="px-4 pt-2">
-            <a href={item.url.startsWith('http') ? item.url : '#'} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-accent hover:text-accent-light text-sm font-medium">
-              🔗 Open original link ↗
-            </a>
-          </div>
-        )}
-
-        {/* FAMILY RATINGS */}
-        <div className="p-4 border-t border-dark-700 space-y-3">
-          <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider">Family ratings</h3>
           <div className="grid grid-cols-2 gap-2">
             {FAMILY.map(f => {
               const r = item.ratings?.find(r => r.user_name === f.name);
               return (
                 <div key={f.name} className="flex items-center gap-2 p-2 bg-dark-700/50 rounded-lg">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
                     style={{backgroundColor: f.color}}>{f.initials}</div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{f.name}</p>
-                    <p className="text-xs font-semibold" style={{color: r ? f.color : '#64748b'}}>{r ? `${r.rating}★` : 'not yet'}</p>
+                    <p className="text-xs font-medium truncate">{f.name}</p>
+                    <p className="text-[11px] font-semibold" style={{color: r ? f.color : '#64748b'}}>{r ? `${r.rating}★` : 'not yet'}</p>
                   </div>
                 </div>
               );
             })}
           </div>
           {item.ratings?.length > 0 && (
-            <div className="p-2.5 bg-accent/10 rounded-lg text-center">
+            <div className="p-2 bg-accent/10 rounded-lg text-center">
               <span className="text-dark-300 text-xs">Average </span>
-              <span className="text-lg font-bold text-accent">★ {(item.ratings.reduce((s,r) => s+r.rating, 0) / item.ratings.length).toFixed(1)}</span>
+              <span className="text-base font-bold text-accent">★ {(item.ratings.reduce((s,r) => s+r.rating, 0) / item.ratings.length).toFixed(1)}</span>
             </div>
           )}
+          {item.url && (
+            <a href={item.url.startsWith('http') ? item.url : '#'} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-accent hover:text-accent-light text-sm font-medium">
+              🔗 Open original ↗
+            </a>
+          )}
         </div>
+
+        {/* TAGS — col 2 full height (desktop) / second on mobile. Auto-saves on click, no Save button. */}
+        <div className="p-4 space-y-4 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:border-l lg:border-dark-700 lg:overflow-y-auto">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-dark-500 mb-2">Rooms</p>
+            <div className="flex flex-wrap gap-1.5">
+              {allRooms.map(r => (
+                <button key={r.id} onClick={() => toggleRoom(r.id)}
+                  className={`tag-pill ${selectedRooms.includes(r.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
+                  {r.icon} {r.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-dark-500 mb-2">Categories</p>
+            <div className="flex flex-wrap gap-1.5">
+              {allCategories.map(c => (
+                <button key={c.id} onClick={() => toggleCat(c.id)}
+                  className={`tag-pill ${selectedCats.includes(c.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
+                  {c.icon} {c.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-[11px] text-dark-500">Tags save automatically as you tap.</p>
+        </div>
+
+        {/* MEDIA — col 1 full height (desktop), fills the width. Caption sits below the fold; scroll to reach it. */}
+        <div className="bg-black relative flex flex-col items-center justify-start p-2 sm:p-3 lg:col-start-1 lg:row-start-1 lg:row-span-2 lg:h-full lg:overflow-y-auto">
+          <button onClick={toggleFullscreen} aria-label="Toggle fullscreen"
+            className="absolute top-3 right-3 z-10 w-9 h-9 rounded-lg bg-dark-900/70 hover:bg-dark-900 text-white flex items-center justify-center text-lg backdrop-blur-sm">
+            {isFs ? '🗗' : '⛶'}
+          </button>
+          <div ref={mediaRef} className="media-fs w-full flex items-start justify-center">
+            {mediaInner}
+          </div>
+        </div>
+
+        {/* COMMENTS — col 3 lower (desktop) / last on mobile */}
+        <div className="lg:col-start-3 lg:row-start-2 lg:border-l lg:border-dark-700 lg:overflow-y-auto">
 
         {/* COMMENTS — a downward scroll lands here */}
         <div className="p-4 border-t border-dark-700 space-y-3">
