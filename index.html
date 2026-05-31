@@ -145,11 +145,13 @@ function getEmbedUrl(item) {
   const url = item.url;
   if (item.content_type === 'instagram_reel') {
     const m = url.match(/\/reel\/([^/?]+)/);
-    return m ? `https://www.instagram.com/reel/${m[1]}/embed/captioned/` : null;
+    // NON-captioned embed: shows the media (and carousel arrows) only — no caption
+    // or comments block, so it stays short and the modal scroll flows to OUR comments.
+    return m ? `https://www.instagram.com/reel/${m[1]}/embed/` : null;
   }
   if (item.content_type === 'instagram_post') {
     const m = url.match(/\/p\/([^/?]+)/);
-    return m ? `https://www.instagram.com/p/${m[1]}/embed/captioned/` : null;
+    return m ? `https://www.instagram.com/p/${m[1]}/embed/` : null;
   }
   if (item.content_type === 'youtube') {
     const m = url.match(/shorts\/([^/?]+)/) || url.match(/(?:v=|youtu\.be\/)([^/?&]+)/);
@@ -637,20 +639,81 @@ function ItemDetail({ item, rooms, categories, allRooms, allCategories, onClose,
           <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl ml-4">&times;</button>
         </div>
 
+        {/* TOP CONTROLS — rating + tags pinned above the media so you never scroll past them */}
+        <div className="p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-dark-500 mb-1">Your rating</p>
+              <StarRating rating={myRating} size="lg" onRate={(r) => onRate(item.id, r)}/>
+            </div>
+            <button onClick={() => editTags ? saveTags() : setEditTags(true)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editTags ? 'bg-accent text-white' : 'bg-dark-700 hover:bg-dark-600 text-dark-200'}`}>
+              {editTags ? '✓ Save tags' : '✏️ Edit tags'}
+            </button>
+          </div>
+          {editTags ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-dark-400 mb-1">Rooms:</p>
+                <div className="flex flex-wrap gap-1">
+                  {allRooms.map(r => (
+                    <button key={r.id}
+                      onClick={() => setSelectedRooms(prev => prev.includes(r.id) ? prev.filter(x=>x!==r.id) : [...prev, r.id])}
+                      className={`tag-pill ${selectedRooms.includes(r.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
+                      {r.icon} {r.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-dark-400 mb-1">Categories:</p>
+                <div className="flex flex-wrap gap-1">
+                  {allCategories.map(c => (
+                    <button key={c.id}
+                      onClick={() => setSelectedCats(prev => prev.includes(c.id) ? prev.filter(x=>x!==c.id) : [...prev, c.id])}
+                      className={`tag-pill ${selectedCats.includes(c.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
+                      {c.icon} {c.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {allRooms.filter(r => selectedRooms.includes(r.id)).map(r => (
+                <span key={r.id} className="tag-pill bg-dark-700 text-dark-200">{r.icon} {r.name}</span>
+              ))}
+              {allCategories.filter(c => selectedCats.includes(c.id)).map(c => (
+                <span key={c.id} className="tag-pill bg-accent/10 text-accent">{c.icon} {c.name}</span>
+              ))}
+              {selectedRooms.length === 0 && selectedCats.length === 0 && (
+                <span className="text-dark-500 text-sm">No tags yet — tap "Edit tags" to categorize</span>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Embedded content preview — live interactive embed for reels/posts/youtube,
             plain image only for actual photo uploads. (getPhotoUrl now also returns a
             thumbnail_url, so we must check the live embed FIRST to keep reels playable
             and post carousels scrollable.) */}
         {(() => {
           const eUrl = getEmbedUrl(item);
-          if (eUrl) return (
-            <div className="px-4 pt-3">
-              <iframe src={eUrl} className="w-full border-0 rounded-lg" scrolling="yes" allowFullScreen
-                style={{height: item.content_type === 'youtube' ? '360px' : '620px', background:'#000'}}
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                allowTransparency="true"/>
-            </div>
-          );
+          if (eUrl) {
+            const h = item.content_type === 'youtube' ? 360
+              : item.content_type === 'instagram_reel' ? 600 : 540;
+            return (
+              <div className="px-4 pt-1">
+                {/* scrolling="no" → the iframe won't trap the page scroll, so
+                    swiping/clicking changes carousel images while a downward
+                    scroll continues to OUR ratings & comments below. */}
+                <iframe src={eUrl} className="w-full border-0 rounded-lg" scrolling="no" allowFullScreen
+                  style={{height: h + 'px', background:'#000'}}
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                  allowTransparency="true"/>
+              </div>
+            );
+          }
           const pUrl = item.content_type === 'photo' ? getPhotoUrl(item) : null;
           if (pUrl) return (
             <div className="px-4 pt-3">
@@ -670,160 +733,85 @@ function ItemDetail({ item, rooms, categories, allRooms, allCategories, onClose,
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="flex border-b border-dark-700 px-4 pt-3">
-          {['info','ratings','comments'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors -mb-px
-                ${activeTab === tab ? 'border-accent text-accent' : 'border-transparent text-dark-400 hover:text-dark-200'}`}>
-              {tab}
-            </button>
-          ))}
+        {/* FAMILY RATINGS */}
+        <div className="p-4 border-t border-dark-700 space-y-3">
+          <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider">Family ratings</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {FAMILY.map(f => {
+              const r = item.ratings?.find(r => r.user_name === f.name);
+              return (
+                <div key={f.name} className="flex items-center gap-2 p-2 bg-dark-700/50 rounded-lg">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                    style={{backgroundColor: f.color}}>{f.initials}</div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{f.name}</p>
+                    <p className="text-xs font-semibold" style={{color: r ? f.color : '#64748b'}}>{r ? `${r.rating}★` : 'not yet'}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {item.ratings?.length > 0 && (
+            <div className="p-2.5 bg-accent/10 rounded-lg text-center">
+              <span className="text-dark-300 text-xs">Average </span>
+              <span className="text-lg font-bold text-accent">★ {(item.ratings.reduce((s,r) => s+r.rating, 0) / item.ratings.length).toFixed(1)}</span>
+            </div>
+          )}
         </div>
 
-        <div className="p-4">
-          {activeTab === 'info' && (
-            <div className="space-y-4">
-              {/* Tags */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider">Room & Category Tags</h3>
-                  <button onClick={() => editTags ? saveTags() : setEditTags(true)}
-                    className="text-accent text-xs font-medium">{editTags ? '✓ Save Tags' : '✏️ Edit Tags'}</button>
-                </div>
-                {editTags ? (
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-dark-400 mb-1">Rooms:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {allRooms.map(r => (
-                          <button key={r.id}
-                            onClick={() => setSelectedRooms(prev => prev.includes(r.id) ? prev.filter(x=>x!==r.id) : [...prev, r.id])}
-                            className={`tag-pill ${selectedRooms.includes(r.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
-                            {r.icon} {r.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-dark-400 mb-1">Categories:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {allCategories.map(c => (
-                          <button key={c.id}
-                            onClick={() => setSelectedCats(prev => prev.includes(c.id) ? prev.filter(x=>x!==c.id) : [...prev, c.id])}
-                            className={`tag-pill ${selectedCats.includes(c.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
-                            {c.icon} {c.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-1">
-                    {allRooms.filter(r => selectedRooms.includes(r.id)).map(r => (
-                      <span key={r.id} className="tag-pill bg-dark-700 text-dark-200">{r.icon} {r.name}</span>
-                    ))}
-                    {allCategories.filter(c => selectedCats.includes(c.id)).map(c => (
-                      <span key={c.id} className="tag-pill bg-accent/10 text-accent">{c.icon} {c.name}</span>
-                    ))}
-                    {selectedRooms.length === 0 && selectedCats.length === 0 && (
-                      <span className="text-dark-500 text-sm">No tags yet — click Edit Tags to categorize</span>
-                    )}
-                  </div>
-                )}
+        {/* COMMENTS — a downward scroll lands here */}
+        <div className="p-4 border-t border-dark-700 space-y-3">
+          <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider">Comments</h3>
+          {comments.map(c => (
+            <div key={c.id} className="p-3 bg-dark-700/50 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-medium text-sm" style={{color: FAMILY.find(f=>f.name===c.user_name)?.color || '#94a3b8'}}>
+                  {c.user_name || 'Unknown'}
+                </span>
+                <span className="text-dark-500 text-xs">{new Date(c.created_at).toLocaleString()}</span>
               </div>
-
-              {/* Your rating */}
-              <div>
-                <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider mb-2">Your Rating</h3>
-                <StarRating rating={myRating} size="lg" onRate={(r) => onRate(item.id, r)}/>
-              </div>
-
-              <div className="text-xs text-dark-500">
-                Added by {item.added_by_name} • {new Date(item.created_at).toLocaleDateString()}
-              </div>
+              <p className="text-dark-200 text-sm whitespace-pre-wrap break-words">{renderBody(c.body)}</p>
             </div>
-          )}
+          ))}
+          {comments.length === 0 && <p className="text-dark-500 text-sm text-center py-4">No comments yet — type <span className="text-accent">@</span> to tag someone</p>}
 
-          {activeTab === 'ratings' && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider">Family Ratings</h3>
-              {FAMILY.map(f => {
-                const r = item.ratings?.find(r => r.user_name === f.name);
-                return (
-                  <div key={f.name} className="flex items-center gap-3 p-3 bg-dark-700/50 rounded-lg">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                      style={{backgroundColor: f.color}}>{f.initials}</div>
-                    <div className="flex-1">
-                      <p className="font-medium">{f.name}</p>
-                      <StarRating rating={r?.rating || 0} size="sm" readOnly/>
-                    </div>
-                    <span className="text-2xl font-bold" style={{color: f.color}}>
-                      {r?.rating || '—'}
-                    </span>
-                  </div>
-                );
-              })}
-              {item.ratings?.length > 0 && (
-                <div className="p-3 bg-accent/10 rounded-lg text-center">
-                  <p className="text-dark-300 text-sm">Average Rating</p>
-                  <p className="text-3xl font-bold text-accent">
-                    ★ {(item.ratings.reduce((s,r) => s+r.rating, 0) / item.ratings.length).toFixed(1)}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'comments' && (
-            <div className="space-y-3">
-              {comments.map(c => (
-                <div key={c.id} className="p-3 bg-dark-700/50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm" style={{color: FAMILY.find(f=>f.name===c.user_name)?.color || '#94a3b8'}}>
-                      {c.user_name || 'Unknown'}
-                    </span>
-                    <span className="text-dark-500 text-xs">{new Date(c.created_at).toLocaleString()}</span>
-                  </div>
-                  <p className="text-dark-200 text-sm whitespace-pre-wrap break-words">{renderBody(c.body)}</p>
-                </div>
-              ))}
-              {comments.length === 0 && <p className="text-dark-500 text-sm text-center py-4">No comments yet — type <span className="text-accent">@</span> to tag someone</p>}
-
-              <div className="relative pt-2">
-                {/* @mention picker */}
-                {mentionOpen && mentionCandidates.length > 0 && (
-                  <div className="absolute bottom-full left-0 mb-2 w-56 bg-dark-800 border border-dark-600 rounded-xl shadow-2xl overflow-hidden z-10">
-                    <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-dark-500 border-b border-dark-700">Tag a family member</p>
-                    {mentionCandidates.map(f => (
-                      <button key={f.name} onMouseDown={e => { e.preventDefault(); pickMention(f.name); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-dark-700 transition-colors">
-                        <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                          style={{backgroundColor: f.color}}>{f.initials}</span>
-                        <span className="text-sm text-dark-100">{f.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <input ref={commentRef} value={comment} onChange={onCommentChange}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        if (mentionOpen && mentionCandidates.length) { e.preventDefault(); pickMention(mentionCandidates[0].name); }
-                        else addComment();
-                      } else if (e.key === 'Escape') { setMentionOpen(false); }
-                    }}
-                    placeholder="Add a comment…  type @ to tag"
-                    className="flex-1 bg-dark-700 rounded-lg px-3 py-2 text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:ring-1 focus:ring-accent"/>
-                  <button onClick={addComment} disabled={sending || !comment.trim()}
-                    className="bg-accent hover:bg-accent-dark disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    {sending ? '…' : 'Send'}
+          <div className="relative">
+            {/* @mention picker */}
+            {mentionOpen && mentionCandidates.length > 0 && (
+              <div className="absolute bottom-full left-0 mb-2 w-56 bg-dark-800 border border-dark-600 rounded-xl shadow-2xl overflow-hidden z-10">
+                <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-dark-500 border-b border-dark-700">Tag a family member</p>
+                {mentionCandidates.map(f => (
+                  <button key={f.name} onMouseDown={e => { e.preventDefault(); pickMention(f.name); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-dark-700 transition-colors">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                      style={{backgroundColor: f.color}}>{f.initials}</span>
+                    <span className="text-sm text-dark-100">{f.name}</span>
                   </button>
-                </div>
-                <p className="text-[11px] text-dark-500 mt-1.5">Tagged people get a 🔔 notification and an email.</p>
+                ))}
               </div>
+            )}
+            <div className="flex gap-2">
+              <input ref={commentRef} value={comment} onChange={onCommentChange}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    if (mentionOpen && mentionCandidates.length) { e.preventDefault(); pickMention(mentionCandidates[0].name); }
+                    else addComment();
+                  } else if (e.key === 'Escape') { setMentionOpen(false); }
+                }}
+                placeholder="Add a comment…  type @ to tag"
+                className="flex-1 bg-dark-700 rounded-lg px-3 py-2 text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:ring-1 focus:ring-accent"/>
+              <button onClick={addComment} disabled={sending || !comment.trim()}
+                className="bg-accent hover:bg-accent-dark disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                {sending ? '…' : 'Send'}
+              </button>
             </div>
-          )}
+            <p className="text-[11px] text-dark-500 mt-1.5">Tagged people get a 🔔 notification and an email.</p>
+          </div>
+        </div>
+
+        {/* Added by */}
+        <div className="px-4 pb-4 text-xs text-dark-500">
+          Added by {item.added_by_name} • {new Date(item.created_at).toLocaleDateString()}
         </div>
       </div>
     </div>
@@ -1435,15 +1423,24 @@ function MainApp({ supabase }) {
   }, [items]);
 
   const handleRate = async (itemId, rating) => {
-    const { data: existing } = await supabase.from('ratings')
-      .select('id').eq('item_id', itemId).eq('user_id', user.id).single();
+    if (!user?.id) return;
+    // 1) Optimistic update everywhere so the star fills instantly and never appears
+    //    to "not save" — applied to both the grid item and the open modal item.
+    const applyLocal = (it) => {
+      if (!it || it.id !== itemId) return it;
+      const others = (it.ratings || []).filter(r => r.user_id !== user.id);
+      return { ...it, ratings: [...others, { item_id: itemId, user_id: user.id, rating, user_name: profile?.name }] };
+    };
+    setItems(prev => prev.map(applyLocal));
+    setDetailItem(prev => applyLocal(prev));
 
-    if (existing) {
-      await supabase.from('ratings').update({ rating, updated_at: new Date().toISOString() }).eq('id', existing.id);
-    } else {
-      await supabase.from('ratings').insert({ item_id: itemId, user_id: user.id, rating });
-    }
-    loadData(true);
+    // 2) Persist immediately with an upsert (atomic — no select+insert race that
+    //    could silently drop a fast click, even while editing tags).
+    const { error } = await supabase.from('ratings').upsert(
+      { item_id: itemId, user_id: user.id, rating, updated_at: new Date().toISOString() },
+      { onConflict: 'item_id,user_id' }
+    );
+    if (error) console.error('Rating save failed:', error.message);
   };
 
   const toggleSelect = (itemId) => {
