@@ -216,6 +216,33 @@ function LazyEmbed({ src, className = '', style = {} }) {
   );
 }
 
+// Instagram embed that auto-sizes to its REAL content height. The IG embed
+// page posts a {type:'MEASURE',details:{height}} message to the parent; we
+// listen for it and size the iframe exactly, so the media is never cut off and
+// there's no inner scrollbar. (Caption/comments are already excluded via the
+// non-captioned embed URL, so this is just the media + carousel.)
+function InstaEmbed({ src, type }) {
+  const [h, setH] = useState(type === 'instagram_reel' ? 640 : 560);
+  useEffect(() => {
+    function onMsg(e) {
+      if (typeof e.origin === 'string' && e.origin.indexOf('instagram.com') === -1) return;
+      let d = e.data;
+      if (typeof d === 'string') { try { d = JSON.parse(d); } catch (_) { return; } }
+      if (d && d.type === 'MEASURE' && d.details && d.details.height) {
+        setH(Math.max(320, Math.ceil(+d.details.height)));
+      }
+    }
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+  return (
+    <iframe src={src} scrolling="no" allowFullScreen
+      className="w-full border-0 rounded-lg" style={{height: h + 'px', background: '#000'}}
+      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+      allowTransparency="true"/>
+  );
+}
+
 // ─── SUPABASE CONTEXT ──────────────────────────────────────────
 const SupabaseContext = createContext(null);
 const AuthContext = createContext(null);
@@ -700,17 +727,20 @@ function ItemDetail({ item, rooms, categories, allRooms, allCategories, onClose,
         {(() => {
           const eUrl = getEmbedUrl(item);
           if (eUrl) {
-            const h = item.content_type === 'youtube' ? 360
-              : item.content_type === 'instagram_reel' ? 600 : 540;
+            if (item.content_type === 'youtube') {
+              return (
+                <div className="px-4 pt-1">
+                  <iframe src={eUrl} className="w-full border-0 rounded-lg" scrolling="no" allowFullScreen
+                    style={{height: '360px', background:'#000'}}
+                    allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    allowTransparency="true"/>
+                </div>
+              );
+            }
+            // Instagram — auto-sized so the whole post/reel is visible (no cut-off)
             return (
               <div className="px-4 pt-1">
-                {/* scrolling="no" → the iframe won't trap the page scroll, so
-                    swiping/clicking changes carousel images while a downward
-                    scroll continues to OUR ratings & comments below. */}
-                <iframe src={eUrl} className="w-full border-0 rounded-lg" scrolling="no" allowFullScreen
-                  style={{height: h + 'px', background:'#000'}}
-                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                  allowTransparency="true"/>
+                <InstaEmbed src={eUrl} type={item.content_type}/>
               </div>
             );
           }
