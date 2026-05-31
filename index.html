@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batra's Forever Home — Moodboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter'], display: ['Playfair Display'] },
+      colors: {
+        dark: {
+          50:'rgb(var(--d50) / <alpha-value>)',100:'rgb(var(--d100) / <alpha-value>)',200:'rgb(var(--d200) / <alpha-value>)',
+          300:'rgb(var(--d300) / <alpha-value>)',400:'rgb(var(--d400) / <alpha-value>)',500:'rgb(var(--d500) / <alpha-value>)',
+          600:'rgb(var(--d600) / <alpha-value>)',700:'rgb(var(--d700) / <alpha-value>)',800:'rgb(var(--d800) / <alpha-value>)',
+          900:'rgb(var(--d900) / <alpha-value>)'
+        },
+        accent: {
+          DEFAULT:'rgb(var(--accent) / <alpha-value>)', light:'rgb(var(--accent-light) / <alpha-value>)', dark:'rgb(var(--accent-dark) / <alpha-value>)'
+        },
+        family: { suketu:'#f97316', satvik:'#8b5cf6', aishwarya:'#ec4899', subodh:'#06b6d4' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  /* ── THEME PALETTES (CSS-variable backed so the whole page can re-skin) ── */
+  /* Palette vars hold RGB *channels* (space-separated) so Tailwind opacity
+     utilities like bg-accent/10 and bg-dark-700/50 resolve correctly. */
+  :root {                      /* Midnight (default dark) */
+    --d50:248 250 252; --d100:226 232 240; --d200:203 213 225; --d300:148 163 184; --d400:100 116 139;
+    --d500:71 85 105; --d600:51 65 85; --d700:30 41 59; --d800:15 23 42; --d900:2 6 23;
+    --glass-bg: rgba(15,23,42,0.78); --glass-border: rgba(51,65,85,0.5);
+    --overlay: rgba(0,0,0,0.72); --scroll-track:#0f172a; --scroll-thumb:#334155;
+    --shimmer1:#1e293b; --shimmer2:#334155; --card-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    --accent:249 115 22; --accent-light:251 146 60; --accent-dark:234 88 12;
+  }
+  html.theme-light {           /* Daylight */
+    --d900:238 242 247; --d800:255 255 255; --d700:233 238 245; --d600:219 227 238; --d500:154 167 184;
+    --d400:100 116 139; --d300:71 85 105; --d200:51 65 85; --d100:30 41 59; --d50:15 23 42;
+    --glass-bg: rgba(255,255,255,0.82); --glass-border: rgba(203,213,225,0.7);
+    --overlay: rgba(15,23,42,0.4); --scroll-track:#e2e8f0; --scroll-thumb:#cbd5e1;
+    --shimmer1:#e5ebf3; --shimmer2:#f4f7fb; --card-shadow: 0 18px 38px rgba(100,116,139,0.25);
+  }
+  /* Accent presets (applied via data-accent on <html>) */
+  html[data-accent="orange"]{--accent:249 115 22;--accent-light:251 146 60;--accent-dark:234 88 12;}
+  html[data-accent="blue"]  {--accent:59 130 246;--accent-light:96 165 250;--accent-dark:37 99 235;}
+  html[data-accent="pink"]  {--accent:236 72 153;--accent-light:244 114 182;--accent-dark:219 39 119;}
+  html[data-accent="teal"]  {--accent:20 184 166;--accent-light:45 212 191;--accent-dark:13 148 136;}
+  html[data-accent="green"] {--accent:34 197 94;--accent-light:74 222 128;--accent-dark:22 163 74;}
+  html[data-accent="violet"]{--accent:139 92 246;--accent-light:167 139 250;--accent-dark:124 58 237;}
+  html[data-accent="rose"]  {--accent:244 63 94;--accent-light:251 113 133;--accent-dark:225 29 72;}
+
+  * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--scroll-track); }
+  ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 3px; }
+  .no-scrollbar::-webkit-scrollbar { display:none; }
+  .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+
+  .star-btn { transition: all 0.15s; }
+  .star-btn:hover { transform: scale(1.2); }
+  .card-hover { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
+  .card-hover:hover { transform: translateY(-4px); box-shadow: var(--card-shadow); }
+  .glass { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); }
+  .shimmer { background: linear-gradient(90deg, var(--shimmer1) 25%, var(--shimmer2) 50%, var(--shimmer1) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes sheetUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in { animation: fadeIn 0.3s ease-out; }
+  .sheet-anim { animation: sheetUp 0.25s cubic-bezier(.4,0,.2,1); }
+
+  /* Generic small pill (used inside cards) */
+  .tag-pill { display:inline-flex; align-items:center; gap:.25rem; padding:.125rem .5rem; border-radius:9999px; font-size:.7rem; line-height:1.1rem; font-weight:500; cursor:pointer; transition:all .15s; }
+
+  /* ── Pretty filter pills ── */
+  .fpill { display:inline-flex; align-items:center; gap:.35rem; padding:.4rem .8rem; border-radius:9999px;
+    font-size:.8rem; font-weight:600; cursor:pointer; white-space:nowrap; user-select:none;
+    transition:all .18s cubic-bezier(.4,0,.2,1); border:1px solid var(--glass-border);
+    background:rgb(var(--d800)); color:rgb(var(--d300)); }
+  .fpill:hover { color:rgb(var(--d100)); border-color:rgb(var(--accent)); transform:translateY(-1px); }
+  .fpill.active { background:linear-gradient(135deg,rgb(var(--accent)),rgb(var(--accent-dark))); color:#fff;
+    border-color:transparent; box-shadow:0 5px 16px -4px rgb(var(--accent) / 0.55); }
+  .fpill.active:hover { transform:translateY(-1px); }
+  .fpill.danger.active { background:rgba(239,68,68,.16); color:#f87171; border-color:rgba(239,68,68,.45); box-shadow:none; }
+  .fpill .cnt { opacity:.6; font-weight:500; }
+
+  .fab { box-shadow: 0 10px 28px -6px rgb(var(--accent) / 0.6); }
+
+  @media (max-width: 640px) {
+    .fpill { padding:.5rem .9rem; font-size:.82rem; }   /* bigger touch targets on phones */
+  }
+
+  body { font-family: 'Inter', sans-serif; background: rgb(var(--d900)); color: rgb(var(--d100)); transition: background .3s ease, color .3s ease; }
+</style>
+<script>
+  // Apply saved theme before React paints, to avoid a flash.
+  (function(){
+    try {
+      var mode = localStorage.getItem('bh_theme') || 'dark';
+      var accent = localStorage.getItem('bh_accent') || 'orange';
+      document.documentElement.classList.toggle('theme-light', mode === 'light');
+      document.documentElement.setAttribute('data-accent', accent);
+    } catch(e){}
+  })();
+</script>
+</head>
+<body class="dark bg-dark-900 text-dark-100 min-h-screen">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef, createContext, useContext } = React;
+
+// ─── CONFIG ────────────────────────────────────────────────────
+// SUPABASE CREDENTIALS (auto-configured)
+const SUPABASE_URL = 'https://hqyllywcdfulxjicmxnw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxeWxseXdjZGZ1bHhqaWNteG53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMDY0MzYsImV4cCI6MjA5NTc4MjQzNn0.m0WMBVi1Z07gEP8yCSEbtyRO0tqUumFiE2Ru6szSZpo';
+
+const FAMILY = [
+  { name: 'Suketu', color: '#f97316', initials: 'SK' },
+  { name: 'Satvik', color: '#8b5cf6', initials: 'SA' },
+  { name: 'Aishwarya', color: '#ec4899', initials: 'AI' },
+  { name: 'Subodh', color: '#06b6d4', initials: 'SU' },
+];
+
+const CONTENT_ICONS = {
+  instagram_reel: '🎬', instagram_post: '📸', youtube: '▶️',
+  photo: '🖼️', website: '🌐', pdf: '📄'
+};
+
+const SUPABASE_STORAGE = SUPABASE_URL + '/storage/v1/object/public/photos/';
+
+// ─── EMBED HELPERS ────────────────────────────────────────────
+function getEmbedUrl(item) {
+  if (!item.url) return null;
+  const url = item.url;
+  if (item.content_type === 'instagram_reel') {
+    const m = url.match(/\/reel\/([^/?]+)/);
+    return m ? `https://www.instagram.com/reel/${m[1]}/embed/captioned/` : null;
+  }
+  if (item.content_type === 'instagram_post') {
+    const m = url.match(/\/p\/([^/?]+)/);
+    return m ? `https://www.instagram.com/p/${m[1]}/embed/captioned/` : null;
+  }
+  if (item.content_type === 'youtube') {
+    const m = url.match(/shorts\/([^/?]+)/) || url.match(/(?:v=|youtu\.be\/)([^/?&]+)/);
+    return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+  }
+  return null;
+}
+
+function getPhotoUrl(item) {
+  if (item.content_type === 'photo' && item.url) {
+    if (item.url.startsWith('http')) return item.url;
+    const fname = item.url.split('/').pop();
+    return SUPABASE_STORAGE + fname;
+  }
+  if (item.thumbnail_url) return item.thumbnail_url;
+  return null;
+}
+
+function getYouTubeId(url) {
+  if (!url) return null;
+  const m = url.match(/shorts\/([^/?]+)/) || url.match(/(?:v=|youtu\.be\/)([^/?&]+)/);
+  return m ? m[1] : null;
+}
+
+// Lightweight static thumbnail for the grid (NO live iframe).
+// Photos use stored image; YouTube uses its thumbnail; Instagram uses the
+// pre-fetched thumbnail_url stored in Supabase Storage. Returns null if none.
+function getThumbUrl(item) {
+  if (item.content_type === 'photo') return getPhotoUrl(item);
+  if (item.content_type === 'youtube') {
+    const id = getYouTubeId(item.url);
+    if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  }
+  if (item.thumbnail_url) return item.thumbnail_url;
+  return null;
+}
+
+// Lazy-loading embed component — only loads iframe when scrolled into view
+function LazyEmbed({ src, className = '', style = {} }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); obs.disconnect(); }
+    }, { rootMargin: '200px' });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className={className} style={style}>
+      {visible ? (
+        <iframe src={src} loading="lazy" allowTransparency="true" allow="encrypted-media"
+          className="w-full h-full border-0" style={{background:'#000'}}/>
+      ) : (
+        <div className="w-full h-full shimmer"/>
+      )}
+    </div>
+  );
+}
+
+// ─── SUPABASE CONTEXT ──────────────────────────────────────────
+const SupabaseContext = createContext(null);
+const AuthContext = createContext(null);
+
+function useSupabase() { return useContext(SupabaseContext); }
+function useAuth() { return useContext(AuthContext); }
+
+// ─── SETUP SCREEN ──────────────────────────────────────────────
+function SetupScreen({ onConnect }) {
+  const [url, setUrl] = useState(SUPABASE_URL);
+  const [key, setKey] = useState(SUPABASE_ANON_KEY);
+
+  const handleConnect = () => {
+    localStorage.setItem('sb_url', url);
+    localStorage.setItem('sb_key', key);
+    onConnect(url, key);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h1 className="font-display text-5xl text-accent mb-2">Batra's</h1>
+          <h2 className="font-display text-3xl text-dark-100">Forever Home</h2>
+          <p className="text-dark-400 mt-4">Connect your Supabase project to get started</p>
+        </div>
+        <div className="glass rounded-2xl p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-dark-300 mb-1">Supabase URL</label>
+            <input type="url" value={url} onChange={e => setUrl(e.target.value)}
+              placeholder="https://xxxxx.supabase.co"
+              className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-3 text-white placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-accent"/>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-dark-300 mb-1">Anon Key</label>
+            <input type="password" value={key} onChange={e => setKey(e.target.value)}
+              placeholder="eyJ..."
+              className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-3 text-white placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-accent"/>
+          </div>
+          <button onClick={handleConnect} disabled={!url || !key}
+            className="w-full bg-accent hover:bg-accent-dark disabled:opacity-40 text-white font-bold py-3 rounded-lg transition-colors">
+            Connect & Launch
+          </button>
+        </div>
+        <p className="text-dark-500 text-xs text-center">Credentials stored locally in your browser</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── LOGIN SCREEN ──────────────────────────────────────────────
+function LoginScreen({ supabase }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+    } catch (err) { setError(err.message); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h1 className="font-display text-5xl text-accent mb-2">Batra's</h1>
+          <h2 className="font-display text-3xl text-dark-100">Forever Home</h2>
+          <p className="text-dark-400 mt-4">Moodboard & Design Decisions</p>
+        </div>
+
+        <div className="glass rounded-2xl p-6">
+          <div className="flex mb-6 bg-dark-800 rounded-lg p-1">
+            <button onClick={() => setIsSignUp(false)}
+              className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${!isSignUp ? 'bg-accent text-white' : 'text-dark-400'}`}>
+              Sign In</button>
+            <button onClick={() => setIsSignUp(true)}
+              className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${isSignUp ? 'bg-accent text-white' : 'text-dark-400'}`}>
+              Sign Up</button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <div>
+                <label className="block text-sm text-dark-300 mb-1">Your Name</label>
+                <select value={name} onChange={e => setName(e.target.value)}
+                  className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-accent focus:outline-none">
+                  <option value="">Select your name</option>
+                  {FAMILY.map(f => <option key={f.name} value={f.name}>{f.name}</option>)}
+                </select>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm text-dark-300 mb-1">Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-3 text-white placeholder-dark-500 focus:ring-2 focus:ring-accent focus:outline-none"
+                placeholder="your@email.com"/>
+            </div>
+            <div>
+              <label className="block text-sm text-dark-300 mb-1">Password</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
+                className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-3 text-white placeholder-dark-500 focus:ring-2 focus:ring-accent focus:outline-none"
+                placeholder="Min 6 characters"/>
+            </div>
+            {error && <p className="text-red-400 text-sm">{error}</p>}
+            <button type="submit" disabled={loading}
+              className="w-full bg-accent hover:bg-accent-dark disabled:opacity-50 text-white font-bold py-3 rounded-lg transition-colors">
+              {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+            </button>
+          </form>
+        </div>
+
+        <div className="grid grid-cols-4 gap-3">
+          {FAMILY.map(f => (
+            <div key={f.name} className="text-center">
+              <div className="w-10 h-10 rounded-full mx-auto flex items-center justify-center text-white text-xs font-bold"
+                style={{backgroundColor: f.color}}>{f.initials}</div>
+              <p className="text-dark-400 text-xs mt-1">{f.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── STAR RATING COMPONENT ─────────────────────────────────────
+function StarRating({ rating = 0, onRate, size = 'md', readOnly = false }) {
+  const [hover, setHover] = useState(0);
+  const sz = size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : 'text-lg';
+
+  return (
+    <div className="flex gap-0.5">
+      {[1,2,3,4,5].map(star => (
+        <button key={star} disabled={readOnly}
+          className={`star-btn ${sz} ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
+          onMouseEnter={() => !readOnly && setHover(star)}
+          onMouseLeave={() => !readOnly && setHover(0)}
+          onClick={() => !readOnly && onRate && onRate(star)}>
+          {star <= (hover || rating) ? '★' : '☆'}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── FAMILY RATINGS DISPLAY ────────────────────────────────────
+function FamilyRatings({ ratings = [], compact = false }) {
+  return (
+    <div className={compact ? "flex gap-2 flex-wrap" : "space-y-1"}>
+      {FAMILY.map(f => {
+        const r = ratings.find(r => r.user_name === f.name);
+        if (!r && compact) return null;
+        return (
+          <div key={f.name} className={`flex items-center gap-1.5 ${compact ? '' : ''}`}>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+              style={{backgroundColor: f.color}}>{f.initials}</div>
+            {compact ? (
+              <span className="text-xs font-medium">{r ? `${r.rating}★` : '—'}</span>
+            ) : (
+              <StarRating rating={r?.rating || 0} size="sm" readOnly/>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── ITEM CARD ─────────────────────────────────────────────────
+// Thumbnail-first: the grid shows a lightweight cached <img> only (no live
+// iframe), so previews stay put when scrolling and the page stays light.
+// The full interactive embed loads in the detail modal when the card is opened.
+const ItemCard = React.memo(function ItemCard({ item, rooms, categories, onRate, currentUserId, onSelect, isSelected, onOpenDetail, selectMode, inTagSelection, onToggleTagSelect }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const myRating = item.ratings?.find(r => r.user_id === currentUserId)?.rating || 0;
+  const avgRating = item.ratings?.length > 0
+    ? (item.ratings.reduce((s,r) => s + r.rating, 0) / item.ratings.length).toFixed(1)
+    : '—';
+  const totalRatings = item.ratings?.filter(r => r.rating > 0).length || 0;
+
+  const itemRooms = rooms.filter(r => item.room_ids?.includes(r.id));
+  const itemCats = categories.filter(c => item.category_ids?.includes(c.id));
+
+  const thumbUrl = getThumbUrl(item);
+  const icon = CONTENT_ICONS[item.content_type] || '📎';
+
+  const handleCardClick = () => {
+    if (selectMode) { onToggleTagSelect(item.id); }
+    else { onOpenDetail(item); }
+  };
+
+  return (
+    <div className={`card-hover glass rounded-xl overflow-hidden fade-in cursor-pointer group
+      ${inTagSelection ? 'ring-2 ring-purple-500' : isSelected ? 'ring-2 ring-accent' : ''}`}
+      style={{contentVisibility:'auto', containIntrinsicSize:'320px'}}
+      onClick={handleCardClick}>
+
+      {/* Visual Preview — static thumbnail image, never a live iframe */}
+      <div className="relative bg-dark-800 overflow-hidden">
+        <div className="aspect-[4/3]">
+          {thumbUrl && !imgFailed ? (
+            <img src={thumbUrl} alt={item.title} loading="lazy" decoding="async"
+              onError={() => setImgFailed(true)}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-dark-700 to-dark-800">
+              <span className="text-5xl opacity-30">{icon}</span>
+              <span className="text-[10px] text-dark-500 uppercase tracking-wider">tap to open</span>
+            </div>
+          )}
+        </div>
+
+        {/* Type badge */}
+        <div className="absolute top-2 left-2 bg-dark-900/80 backdrop-blur-sm rounded-full px-2 py-0.5 text-xs flex items-center gap-1">
+          <span>{icon}</span>
+          <span className="text-dark-300">{item.content_type.replace('_',' ')}</span>
+        </div>
+
+        {/* Average rating badge */}
+        {totalRatings > 0 && (
+          <div className="absolute top-2 right-2 bg-accent/90 backdrop-blur-sm rounded-full px-2 py-0.5 text-xs font-bold text-white flex items-center gap-1">
+            ★ {avgRating}
+            <span className="text-white/70">({totalRatings})</span>
+          </div>
+        )}
+
+        {/* Selection control — tag-select in select mode, else compare checkbox */}
+        {selectMode ? (
+          <div className="absolute bottom-2 right-2">
+            <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors
+              ${inTagSelection ? 'bg-purple-500 border-purple-500 text-white' : 'border-white/70 bg-dark-900/60 text-transparent'}`}>
+              ✓
+            </div>
+          </div>
+        ) : (
+          <div className="absolute bottom-2 right-2" onClick={e => { e.stopPropagation(); onSelect(item.id); }}>
+            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors
+              ${isSelected ? 'bg-accent border-accent text-white' : 'border-dark-400 bg-dark-900/60 text-transparent hover:border-accent'}`}>
+              ✓
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-3 space-y-2">
+        <h3 className="font-semibold text-sm text-dark-100 truncate">{item.title}</h3>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1">
+          {itemRooms.map(r => (
+            <span key={r.id} className="tag-pill bg-dark-700 text-dark-300">{r.icon} {r.name.split(' ')[0]}</span>
+          ))}
+          {itemCats.map(c => (
+            <span key={c.id} className="tag-pill bg-accent/10 text-accent">{c.icon} {c.name}</span>
+          ))}
+          {!itemRooms.length && !itemCats.length && (
+            <span className="tag-pill bg-dark-700 text-dark-500">Unsorted</span>
+          )}
+        </div>
+
+        {/* My Rating */}
+        <div className="flex items-center justify-between pt-1 border-t border-dark-700">
+          <span className="text-[10px] text-dark-500 uppercase tracking-wider">Your rating</span>
+          <div onClick={e => e.stopPropagation()}>
+            <StarRating rating={myRating} size="sm" onRate={(r) => onRate(item.id, r)}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// ─── ITEM DETAIL MODAL ─────────────────────────────────────────
+function ItemDetail({ item, rooms, categories, allRooms, allCategories, onClose, onRate, currentUserId, currentUserName, profiles = [], supabase }) {
+  const [activeTab, setActiveTab] = useState('info');
+  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState([]);
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [sending, setSending] = useState(false);
+  const commentRef = useRef(null);
+
+  // Family members other than me, optionally filtered by what's typed after "@"
+  const mentionCandidates = FAMILY
+    .filter(f => f.name !== currentUserName)
+    .filter(f => f.name.toLowerCase().startsWith(mentionQuery.toLowerCase()));
+  const [editTags, setEditTags] = useState(false);
+  const [selectedRooms, setSelectedRooms] = useState(item.room_ids || []);
+  const [selectedCats, setSelectedCats] = useState(item.category_ids || []);
+  const [editTitle, setEditTitle] = useState(false);
+  const [title, setTitle] = useState(item.title);
+  const myRating = item.ratings?.find(r => r.user_id === currentUserId)?.rating || 0;
+
+  useEffect(() => {
+    loadComments();
+  }, [item.id]);
+
+  const loadComments = async () => {
+    const { data } = await supabase.from('comments').select('*').eq('item_id', item.id).order('created_at', { ascending: true });
+    if (data) setComments(data);
+  };
+
+  // Detect @mentions: any family name written as "@Name" in the comment body
+  const detectMentions = (text) => {
+    const named = FAMILY.filter(f => new RegExp('@' + f.name + '\\b', 'i').test(text)).map(f => f.name);
+    return [...new Set(named)];
+  };
+
+  const onCommentChange = (e) => {
+    const val = e.target.value;
+    setComment(val);
+    // Open the picker when the caret is right after an "@token" at the end of input
+    const m = val.match(/@(\w*)$/);
+    if (m) { setMentionOpen(true); setMentionQuery(m[1]); }
+    else { setMentionOpen(false); setMentionQuery(''); }
+  };
+
+  const pickMention = (name) => {
+    const next = comment.replace(/@(\w*)$/, '@' + name + ' ');
+    setComment(next);
+    setMentionOpen(false); setMentionQuery('');
+    if (commentRef.current) commentRef.current.focus();
+  };
+
+  const addComment = async () => {
+    if (!comment.trim() || sending) return;
+    setSending(true);
+    const body = comment.trim();
+    const mentionNames = detectMentions(body);
+
+    const { data: inserted } = await supabase.from('comments')
+      .insert({ item_id: item.id, user_id: currentUserId, user_name: currentUserName, body, mentions: mentionNames })
+      .select().single();
+
+    // Build in-app notifications for everyone mentioned (except myself)
+    const recipients = profiles.filter(p =>
+      mentionNames.includes(p.name) && p.id !== currentUserId);
+
+    if (recipients.length) {
+      const snippet = body.length > 140 ? body.slice(0, 140) + '…' : body;
+      await supabase.from('notifications').insert(recipients.map(r => ({
+        recipient_id: r.id, actor_id: currentUserId, actor_name: currentUserName,
+        item_id: item.id, comment_id: inserted?.id || null, type: 'mention', body: snippet,
+      })));
+      // Fire-and-forget email (works once an email provider key is configured server-side)
+      try {
+        supabase.functions.invoke('notify-mention', { body: {
+          recipient_ids: recipients.map(r => r.id),
+          item_id: item.id, item_title: item.title,
+          actor_name: currentUserName, body: snippet,
+        }});
+      } catch (e) { /* email is best-effort; in-app notification already saved */ }
+    }
+
+    setComment(''); setMentionOpen(false); setSending(false);
+    loadComments();
+  };
+
+  // Render a comment body with @mentions highlighted
+  const renderBody = (text) => {
+    const parts = String(text).split(/(@\w+)/g);
+    return parts.map((p, i) => {
+      const isMention = /^@\w+$/.test(p) && FAMILY.some(f => '@' + f.name.toLowerCase() === p.toLowerCase());
+      return isMention
+        ? <span key={i} className="text-accent font-semibold">{p}</span>
+        : <span key={i}>{p}</span>;
+    });
+  };
+
+  const saveTags = async () => {
+    await supabase.from('item_rooms').delete().eq('item_id', item.id);
+    await supabase.from('item_categories').delete().eq('item_id', item.id);
+    if (selectedRooms.length) {
+      await supabase.from('item_rooms').insert(selectedRooms.map(rid => ({ item_id: item.id, room_id: rid })));
+    }
+    if (selectedCats.length) {
+      await supabase.from('item_categories').insert(selectedCats.map(cid => ({ item_id: item.id, category_id: cid })));
+    }
+    setEditTags(false);
+  };
+
+  const saveTitle = async () => {
+    await supabase.from('items').update({ title }).eq('id', item.id);
+    item.title = title;
+    setEditTitle(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm" style={{backgroundColor:'var(--overlay)'}} onClick={onClose}>
+      <div className="bg-dark-800 rounded-t-2xl sm:rounded-2xl max-w-2xl w-full h-[92vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto shadow-2xl sheet-anim" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-dark-700 sticky top-0 bg-dark-800 z-10">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <span className="text-2xl">{CONTENT_ICONS[item.content_type]}</span>
+            {editTitle ? (
+              <div className="flex gap-2 flex-1">
+                <input value={title} onChange={e => setTitle(e.target.value)}
+                  className="flex-1 bg-dark-700 rounded px-2 py-1 text-white focus:outline-none focus:ring-1 focus:ring-accent"/>
+                <button onClick={saveTitle} className="text-accent text-sm font-medium">Save</button>
+              </div>
+            ) : (
+              <h2 className="font-bold text-lg truncate cursor-pointer hover:text-accent" onClick={() => setEditTitle(true)}>
+                {item.title}
+              </h2>
+            )}
+          </div>
+          <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl ml-4">&times;</button>
+        </div>
+
+        {/* Embedded content preview — live interactive embed for reels/posts/youtube,
+            plain image only for actual photo uploads. (getPhotoUrl now also returns a
+            thumbnail_url, so we must check the live embed FIRST to keep reels playable
+            and post carousels scrollable.) */}
+        {(() => {
+          const eUrl = getEmbedUrl(item);
+          if (eUrl) return (
+            <div className="px-4 pt-3">
+              <iframe src={eUrl} className="w-full border-0 rounded-lg" scrolling="yes" allowFullScreen
+                style={{height: item.content_type === 'youtube' ? '360px' : '620px', background:'#000'}}
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                allowTransparency="true"/>
+            </div>
+          );
+          const pUrl = item.content_type === 'photo' ? getPhotoUrl(item) : null;
+          if (pUrl) return (
+            <div className="px-4 pt-3">
+              <img src={pUrl} alt={item.title} className="w-full rounded-lg max-h-[400px] object-contain bg-dark-900"/>
+            </div>
+          );
+          return null;
+        })()}
+
+        {/* Original link */}
+        {item.url && (
+          <div className="px-4 pt-2">
+            <a href={item.url.startsWith('http') ? item.url : '#'} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-accent hover:text-accent-light text-sm font-medium">
+              🔗 Open original link ↗
+            </a>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex border-b border-dark-700 px-4 pt-3">
+          {['info','ratings','comments'].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors -mb-px
+                ${activeTab === tab ? 'border-accent text-accent' : 'border-transparent text-dark-400 hover:text-dark-200'}`}>
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4">
+          {activeTab === 'info' && (
+            <div className="space-y-4">
+              {/* Tags */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider">Room & Category Tags</h3>
+                  <button onClick={() => editTags ? saveTags() : setEditTags(true)}
+                    className="text-accent text-xs font-medium">{editTags ? '✓ Save Tags' : '✏️ Edit Tags'}</button>
+                </div>
+                {editTags ? (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-dark-400 mb-1">Rooms:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {allRooms.map(r => (
+                          <button key={r.id}
+                            onClick={() => setSelectedRooms(prev => prev.includes(r.id) ? prev.filter(x=>x!==r.id) : [...prev, r.id])}
+                            className={`tag-pill ${selectedRooms.includes(r.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
+                            {r.icon} {r.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-dark-400 mb-1">Categories:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {allCategories.map(c => (
+                          <button key={c.id}
+                            onClick={() => setSelectedCats(prev => prev.includes(c.id) ? prev.filter(x=>x!==c.id) : [...prev, c.id])}
+                            className={`tag-pill ${selectedCats.includes(c.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
+                            {c.icon} {c.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {allRooms.filter(r => selectedRooms.includes(r.id)).map(r => (
+                      <span key={r.id} className="tag-pill bg-dark-700 text-dark-200">{r.icon} {r.name}</span>
+                    ))}
+                    {allCategories.filter(c => selectedCats.includes(c.id)).map(c => (
+                      <span key={c.id} className="tag-pill bg-accent/10 text-accent">{c.icon} {c.name}</span>
+                    ))}
+                    {selectedRooms.length === 0 && selectedCats.length === 0 && (
+                      <span className="text-dark-500 text-sm">No tags yet — click Edit Tags to categorize</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Your rating */}
+              <div>
+                <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider mb-2">Your Rating</h3>
+                <StarRating rating={myRating} size="lg" onRate={(r) => onRate(item.id, r)}/>
+              </div>
+
+              <div className="text-xs text-dark-500">
+                Added by {item.added_by_name} • {new Date(item.created_at).toLocaleDateString()}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'ratings' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-dark-300 uppercase tracking-wider">Family Ratings</h3>
+              {FAMILY.map(f => {
+                const r = item.ratings?.find(r => r.user_name === f.name);
+                return (
+                  <div key={f.name} className="flex items-center gap-3 p-3 bg-dark-700/50 rounded-lg">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                      style={{backgroundColor: f.color}}>{f.initials}</div>
+                    <div className="flex-1">
+                      <p className="font-medium">{f.name}</p>
+                      <StarRating rating={r?.rating || 0} size="sm" readOnly/>
+                    </div>
+                    <span className="text-2xl font-bold" style={{color: f.color}}>
+                      {r?.rating || '—'}
+                    </span>
+                  </div>
+                );
+              })}
+              {item.ratings?.length > 0 && (
+                <div className="p-3 bg-accent/10 rounded-lg text-center">
+                  <p className="text-dark-300 text-sm">Average Rating</p>
+                  <p className="text-3xl font-bold text-accent">
+                    ★ {(item.ratings.reduce((s,r) => s+r.rating, 0) / item.ratings.length).toFixed(1)}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'comments' && (
+            <div className="space-y-3">
+              {comments.map(c => (
+                <div key={c.id} className="p-3 bg-dark-700/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-sm" style={{color: FAMILY.find(f=>f.name===c.user_name)?.color || '#94a3b8'}}>
+                      {c.user_name || 'Unknown'}
+                    </span>
+                    <span className="text-dark-500 text-xs">{new Date(c.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="text-dark-200 text-sm whitespace-pre-wrap break-words">{renderBody(c.body)}</p>
+                </div>
+              ))}
+              {comments.length === 0 && <p className="text-dark-500 text-sm text-center py-4">No comments yet — type <span className="text-accent">@</span> to tag someone</p>}
+
+              <div className="relative pt-2">
+                {/* @mention picker */}
+                {mentionOpen && mentionCandidates.length > 0 && (
+                  <div className="absolute bottom-full left-0 mb-2 w-56 bg-dark-800 border border-dark-600 rounded-xl shadow-2xl overflow-hidden z-10">
+                    <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-dark-500 border-b border-dark-700">Tag a family member</p>
+                    {mentionCandidates.map(f => (
+                      <button key={f.name} onMouseDown={e => { e.preventDefault(); pickMention(f.name); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-dark-700 transition-colors">
+                        <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                          style={{backgroundColor: f.color}}>{f.initials}</span>
+                        <span className="text-sm text-dark-100">{f.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input ref={commentRef} value={comment} onChange={onCommentChange}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        if (mentionOpen && mentionCandidates.length) { e.preventDefault(); pickMention(mentionCandidates[0].name); }
+                        else addComment();
+                      } else if (e.key === 'Escape') { setMentionOpen(false); }
+                    }}
+                    placeholder="Add a comment…  type @ to tag"
+                    className="flex-1 bg-dark-700 rounded-lg px-3 py-2 text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:ring-1 focus:ring-accent"/>
+                  <button onClick={addComment} disabled={sending || !comment.trim()}
+                    className="bg-accent hover:bg-accent-dark disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    {sending ? '…' : 'Send'}
+                  </button>
+                </div>
+                <p className="text-[11px] text-dark-500 mt-1.5">Tagged people get a 🔔 notification and an email.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── COMPARE VIEW ──────────────────────────────────────────────
+function CompareView({ items, onClose }) {
+  if (!items.length) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-dark-900/95 backdrop-blur-sm overflow-y-auto p-4" onClick={onClose}>
+      <div className="max-w-6xl mx-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-display text-2xl text-accent">Compare ({items.length} items)</h2>
+          <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl">&times;</button>
+        </div>
+
+        <div className={`grid gap-4 ${items.length === 2 ? 'grid-cols-2' : items.length === 3 ? 'grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
+          {items.map(item => {
+            const avgRating = item.ratings?.length > 0
+              ? (item.ratings.reduce((s,r) => s+r.rating, 0) / item.ratings.length).toFixed(1) : '—';
+            return (
+              <div key={item.id} className="glass rounded-xl overflow-hidden">
+                <div className="bg-dark-800">
+                  {(() => {
+                    const pUrl = getPhotoUrl(item);
+                    const eUrl = getEmbedUrl(item);
+                    if (pUrl) return <div className="aspect-[4/3]"><img src={pUrl} alt="" className="w-full h-full object-cover"/></div>;
+                    if (eUrl) return <iframe src={eUrl} className="w-full border-0" style={{height: item.content_type === 'youtube' ? '200px' : '320px', background:'#000'}} allow="encrypted-media"/>;
+                    return <div className="aspect-[4/3] flex items-center justify-center"><span className="text-4xl opacity-30">{CONTENT_ICONS[item.content_type]}</span></div>;
+                  })()}
+                </div>
+                <div className="p-4 space-y-3">
+                  <h3 className="font-semibold text-sm">{item.title}</h3>
+                  <div className="text-center py-2 bg-dark-700/50 rounded-lg">
+                    <p className="text-xs text-dark-400">Average</p>
+                    <p className="text-2xl font-bold text-accent">★ {avgRating}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    {FAMILY.map(f => {
+                      const r = item.ratings?.find(r => r.user_name === f.name);
+                      return (
+                        <div key={f.name} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 rounded-full" style={{backgroundColor: f.color}}/>
+                            <span className="text-dark-300">{f.name}</span>
+                          </div>
+                          <span className="font-bold" style={{color: r ? f.color : '#475569'}}>
+                            {r ? `${r.rating}★` : '—'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {item.url && !item.url.startsWith('/') && (
+                    <a href={item.url} target="_blank" rel="noopener noreferrer"
+                      className="block text-center text-accent text-xs hover:text-accent-light">Open Link ↗</a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LEADERBOARD VIEW ──────────────────────────────────────────
+function LeaderboardView({ items, onClose }) {
+  const sorted = [...items]
+    .map(item => ({
+      ...item,
+      avgRating: item.ratings?.length > 0
+        ? item.ratings.reduce((s,r) => s+r.rating, 0) / item.ratings.length : 0,
+      totalVotes: item.ratings?.filter(r => r.rating > 0).length || 0
+    }))
+    .filter(i => i.totalVotes > 0)
+    .sort((a,b) => b.avgRating - a.avgRating || b.totalVotes - a.totalVotes);
+
+  const medals = ['🥇','🥈','🥉'];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-dark-900/95 backdrop-blur-sm overflow-y-auto p-4" onClick={onClose}>
+      <div className="max-w-2xl mx-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-display text-2xl text-accent">🏆 Leaderboard</h2>
+          <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl">&times;</button>
+        </div>
+
+        {sorted.length === 0 ? (
+          <p className="text-dark-400 text-center py-8">No rated items yet. Start voting!</p>
+        ) : (
+          <div className="space-y-2">
+            {sorted.map((item, i) => (
+              <div key={item.id} className={`glass rounded-xl p-4 flex items-center gap-4 ${i < 3 ? 'border border-accent/30' : ''}`}>
+                <span className="text-2xl w-8 text-center">{i < 3 ? medals[i] : `#${i+1}`}</span>
+                <div className="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {(() => {
+                    const pUrl = getPhotoUrl(item);
+                    if (pUrl) return <img src={pUrl} alt="" className="w-full h-full object-cover"/>;
+                    return <span>{CONTENT_ICONS[item.content_type]}</span>;
+                  })()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-sm truncate">{item.title}</h3>
+                  <div className="flex gap-2 mt-0.5">
+                    {FAMILY.map(f => {
+                      const r = item.ratings?.find(r => r.user_name === f.name);
+                      return r ? (
+                        <span key={f.name} className="text-xs font-medium" style={{color: f.color}}>
+                          {f.initials}:{r.rating}★
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-accent">★ {item.avgRating.toFixed(1)}</p>
+                  <p className="text-xs text-dark-400">{item.totalVotes} votes</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── ADD ITEM MODAL ────────────────────────────────────────────
+function AddItemModal({ onClose, supabase, rooms, categories, onAdded }) {
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
+  const [contentType, setContentType] = useState('website');
+  const [selectedRooms, setSelectedRooms] = useState([]);
+  const [selectedCats, setSelectedCats] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const detectType = (url) => {
+    if (url.includes('instagram.com/reel')) return 'instagram_reel';
+    if (url.includes('instagram.com/p/')) return 'instagram_post';
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+    return 'website';
+  };
+
+  const handleUrlChange = (val) => {
+    setUrl(val);
+    if (val) setContentType(detectType(val));
+  };
+
+  const handleSubmit = async () => {
+    if (!title.trim()) return;
+    setLoading(true);
+    const { data: profile } = await supabase.auth.getUser();
+    const { data: prof } = await supabase.from('profiles').select('name').eq('id', profile.user.id).single();
+
+    const { data: item, error } = await supabase.from('items').insert({
+      title, url: url || null, content_type: contentType,
+      added_by: profile.user.id, added_by_name: prof?.name || 'Unknown'
+    }).select().single();
+
+    if (item) {
+      if (selectedRooms.length) {
+        await supabase.from('item_rooms').insert(selectedRooms.map(rid => ({ item_id: item.id, room_id: rid })));
+      }
+      if (selectedCats.length) {
+        await supabase.from('item_categories').insert(selectedCats.map(cid => ({ item_id: item.id, category_id: cid })));
+      }
+      // Auto-fetch a static grid thumbnail for Instagram items. YouTube/photos
+      // derive their thumbnail client-side, so they need no server call.
+      if (contentType === 'instagram_reel' || contentType === 'instagram_post') {
+        try {
+          await fetch(`${SUPABASE_URL}/functions/v1/backfill-thumbs?limit=25`, {
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY }
+          });
+        } catch (e) { /* thumbnail is best-effort; item is already saved */ }
+      }
+    }
+    setLoading(false);
+    onAdded();
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm" style={{backgroundColor:'var(--overlay)'}} onClick={onClose}>
+      <div className="bg-dark-800 rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-6 space-y-4 sheet-anim" onClick={e => e.stopPropagation()}>
+        <h2 className="font-display text-xl text-accent">Add Inspiration</h2>
+
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">Title *</label>
+          <input value={title} onChange={e => setTitle(e.target.value)}
+            placeholder="e.g. Modern kitchen island design"
+            className="w-full bg-dark-700 rounded-lg px-3 py-2 text-white placeholder-dark-500 focus:outline-none focus:ring-1 focus:ring-accent"/>
+        </div>
+
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">URL (optional)</label>
+          <input value={url} onChange={e => handleUrlChange(e.target.value)}
+            placeholder="https://..."
+            className="w-full bg-dark-700 rounded-lg px-3 py-2 text-white placeholder-dark-500 focus:outline-none focus:ring-1 focus:ring-accent"/>
+        </div>
+
+        <div>
+          <label className="block text-sm text-dark-300 mb-1">Type</label>
+          <select value={contentType} onChange={e => setContentType(e.target.value)}
+            className="w-full bg-dark-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-accent">
+            {Object.entries(CONTENT_ICONS).map(([k,v]) => (
+              <option key={k} value={k}>{v} {k.replace('_',' ')}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <p className="text-sm text-dark-300 mb-1">Rooms</p>
+          <div className="flex flex-wrap gap-1">
+            {rooms.map(r => (
+              <button key={r.id}
+                onClick={() => setSelectedRooms(prev => prev.includes(r.id) ? prev.filter(x=>x!==r.id) : [...prev, r.id])}
+                className={`tag-pill ${selectedRooms.includes(r.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300'}`}>
+                {r.icon} {r.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-sm text-dark-300 mb-1">Categories</p>
+          <div className="flex flex-wrap gap-1">
+            {categories.map(c => (
+              <button key={c.id}
+                onClick={() => setSelectedCats(prev => prev.includes(c.id) ? prev.filter(x=>x!==c.id) : [...prev, c.id])}
+                className={`tag-pill ${selectedCats.includes(c.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300'}`}>
+                {c.icon} {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button onClick={onClose} className="flex-1 bg-dark-700 hover:bg-dark-600 text-dark-200 py-2.5 rounded-lg font-medium transition-colors">Cancel</button>
+          <button onClick={handleSubmit} disabled={!title.trim() || loading}
+            className="flex-1 bg-accent hover:bg-accent-dark disabled:opacity-40 text-white py-2.5 rounded-lg font-bold transition-colors">
+            {loading ? 'Adding...' : 'Add Item'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BATCH TAG MODAL ───────────────────────────────────────────
+function BatchTagModal({ itemIds, allRooms, allCategories, supabase, onClose, onDone }) {
+  const [selectedRooms, setSelectedRooms] = useState([]);
+  const [selectedCats, setSelectedCats] = useState([]);
+  const [mode, setMode] = useState('add'); // 'add' | 'replace'
+  const [saving, setSaving] = useState(false);
+
+  const nothingPicked = selectedRooms.length === 0 && selectedCats.length === 0;
+
+  const apply = async () => {
+    if (nothingPicked) return;
+    setSaving(true);
+    const roomRows = itemIds.flatMap(id => selectedRooms.map(rid => ({ item_id: id, room_id: rid })));
+    const catRows  = itemIds.flatMap(id => selectedCats.map(cid => ({ item_id: id, category_id: cid })));
+
+    if (mode === 'replace') {
+      await supabase.from('item_rooms').delete().in('item_id', itemIds);
+      await supabase.from('item_categories').delete().in('item_id', itemIds);
+    }
+    if (roomRows.length) {
+      await supabase.from('item_rooms').upsert(roomRows, { onConflict: 'item_id,room_id', ignoreDuplicates: true });
+    }
+    if (catRows.length) {
+      await supabase.from('item_categories').upsert(catRows, { onConflict: 'item_id,category_id', ignoreDuplicates: true });
+    }
+    setSaving(false);
+    onDone();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm" style={{backgroundColor:'var(--overlay)'}} onClick={onClose}>
+      <div className="bg-dark-800 rounded-t-2xl sm:rounded-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-6 space-y-4 sheet-anim" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-xl text-accent">Tag {itemIds.length} item{itemIds.length === 1 ? '' : 's'}</h2>
+          <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl">&times;</button>
+        </div>
+
+        {/* Mode */}
+        <div className="flex bg-dark-900 rounded-lg p-1 text-sm">
+          <button onClick={() => setMode('add')}
+            className={`flex-1 py-2 rounded-md font-medium transition-colors ${mode === 'add' ? 'bg-accent text-white' : 'text-dark-400'}`}>
+            ➕ Add to existing
+          </button>
+          <button onClick={() => setMode('replace')}
+            className={`flex-1 py-2 rounded-md font-medium transition-colors ${mode === 'replace' ? 'bg-accent text-white' : 'text-dark-400'}`}>
+            ♻️ Replace all
+          </button>
+        </div>
+        <p className="text-xs text-dark-500 -mt-2">
+          {mode === 'add'
+            ? 'Adds the chosen tags to every selected item, keeping their current tags.'
+            : 'Clears existing room & category tags on the selected items, then applies exactly what you pick here.'}
+        </p>
+
+        <div>
+          <p className="text-sm text-dark-300 mb-1">Rooms</p>
+          <div className="flex flex-wrap gap-1">
+            {allRooms.map(r => (
+              <button key={r.id}
+                onClick={() => setSelectedRooms(prev => prev.includes(r.id) ? prev.filter(x=>x!==r.id) : [...prev, r.id])}
+                className={`tag-pill ${selectedRooms.includes(r.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
+                {r.icon} {r.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-sm text-dark-300 mb-1">Categories</p>
+          <div className="flex flex-wrap gap-1">
+            {allCategories.map(c => (
+              <button key={c.id}
+                onClick={() => setSelectedCats(prev => prev.includes(c.id) ? prev.filter(x=>x!==c.id) : [...prev, c.id])}
+                className={`tag-pill ${selectedCats.includes(c.id) ? 'bg-accent text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}>
+                {c.icon} {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button onClick={onClose} className="flex-1 bg-dark-700 hover:bg-dark-600 text-dark-200 py-2.5 rounded-lg font-medium transition-colors">Cancel</button>
+          <button onClick={apply} disabled={nothingPicked || saving}
+            className="flex-1 bg-accent hover:bg-accent-dark disabled:opacity-40 text-white py-2.5 rounded-lg font-bold transition-colors">
+            {saving ? 'Applying...' : `Apply to ${itemIds.length}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── THEME SWITCHER ────────────────────────────────────────────
+function ThemeSwitcher() {
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState(() => { try { return localStorage.getItem('bh_theme') || 'dark'; } catch(e){ return 'dark'; } });
+  const [accent, setAccent] = useState(() => { try { return localStorage.getItem('bh_accent') || 'orange'; } catch(e){ return 'orange'; } });
+  const ref = useRef(null);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('theme-light', mode === 'light');
+    try { localStorage.setItem('bh_theme', mode); } catch(e){}
+  }, [mode]);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-accent', accent);
+    try { localStorage.setItem('bh_accent', accent); } catch(e){}
+  }, [accent]);
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const ACCENTS = [
+    {key:'orange',c:'#f97316'},{key:'blue',c:'#3b82f6'},{key:'pink',c:'#ec4899'},
+    {key:'teal',c:'#14b8a6'},{key:'green',c:'#22c55e'},{key:'violet',c:'#8b5cf6'},{key:'rose',c:'#f43f5e'}
+  ];
+
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen(o => !o)} title="Theme & colours"
+        className="w-9 h-9 rounded-full glass flex items-center justify-center text-lg hover:scale-105 transition-transform">
+        {mode === 'light' ? '🌞' : '🌙'}
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-60 glass rounded-2xl p-4 shadow-2xl z-50 fade-in">
+          <p className="text-[10px] uppercase tracking-widest text-dark-500 mb-2">Appearance</p>
+          <div className="flex bg-dark-900/50 rounded-lg p-1 mb-4">
+            <button onClick={() => setMode('dark')}
+              className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${mode==='dark'?'bg-accent text-white':'text-dark-400'}`}>🌙 Dark</button>
+            <button onClick={() => setMode('light')}
+              className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${mode==='light'?'bg-accent text-white':'text-dark-400'}`}>🌞 Daylight</button>
+          </div>
+          <p className="text-[10px] uppercase tracking-widest text-dark-500 mb-2">Accent colour</p>
+          <div className="flex flex-wrap gap-2.5">
+            {ACCENTS.map(a => (
+              <button key={a.key} onClick={() => setAccent(a.key)} title={a.key}
+                className="w-7 h-7 rounded-full transition-transform hover:scale-110"
+                style={{backgroundColor:a.c, outline: accent===a.key ? '2px solid '+a.c : 'none', outlineOffset:'2px', transform: accent===a.key?'scale(1.1)':'none'}}/>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── NOTIFICATION BELL ─────────────────────────────────────────
+function NotificationBell({ supabase, userId, items, onOpenItem }) {
+  const [notes, setNotes] = useState([]);
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('notifications').select('*')
+      .eq('recipient_id', userId).order('created_at', { ascending: false }).limit(40);
+    setNotes(data || []);
+  }, [supabase, userId]);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const ch = supabase.channel('realtime-notifications-' + userId)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${userId}` }, load)
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, [supabase, userId, load]);
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const unread = notes.filter(n => !n.read).length;
+
+  const openNote = async (n) => {
+    if (!n.read) await supabase.from('notifications').update({ read: true }).eq('id', n.id);
+    setOpen(false);
+    const it = items.find(i => i.id === n.item_id);
+    if (it) onOpenItem(it);
+    load();
+  };
+  const markAll = async () => {
+    await supabase.from('notifications').update({ read: true }).eq('recipient_id', userId).eq('read', false);
+    load();
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen(o => !o)} title="Notifications"
+        className="relative w-9 h-9 rounded-full glass flex items-center justify-center text-lg hover:scale-105 transition-transform">
+        🔔
+        {unread > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-80 max-w-[88vw] glass rounded-2xl shadow-2xl z-50 fade-in overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-dark-700">
+            <span className="font-semibold text-sm">Notifications</span>
+            {unread > 0 && <button onClick={markAll} className="text-accent text-xs font-medium">Mark all read</button>}
+          </div>
+          <div className="max-h-96 overflow-y-auto">
+            {notes.length === 0 ? (
+              <p className="text-dark-500 text-sm text-center py-8">No notifications yet</p>
+            ) : notes.map(n => {
+              const it = items.find(i => i.id === n.item_id);
+              const color = FAMILY.find(f => f.name === n.actor_name)?.color || '#94a3b8';
+              return (
+                <button key={n.id} onClick={() => openNote(n)}
+                  className={`w-full text-left px-4 py-3 border-b border-dark-700/60 hover:bg-dark-700/50 transition-colors flex gap-3 ${!n.read ? 'bg-accent/5' : ''}`}>
+                  <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0" style={{backgroundColor: color}}>
+                    {(n.actor_name || '?').substring(0,2).toUpperCase()}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-dark-100"><span className="font-semibold">{n.actor_name}</span> tagged you{it ? ` on “${it.title}”` : ''}</p>
+                    {n.body && <p className="text-xs text-dark-400 truncate mt-0.5">{n.body}</p>}
+                    <p className="text-[10px] text-dark-500 mt-0.5">{new Date(n.created_at).toLocaleString()}</p>
+                  </div>
+                  {!n.read && <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0 mt-1.5"/>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MAIN APP ──────────────────────────────────────────────────
+function MainApp({ supabase }) {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [items, setItems] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [allProfiles, setAllProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false); // mobile collapse
+
+  // Filters
+  const [filterRoom, setFilterRoom] = useState(null);
+  const [filterCategory, setFilterCategory] = useState(null);
+  const [filterType, setFilterType] = useState(null);
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+
+  // UI state
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [showCompare, setShowCompare] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showAddItem, setShowAddItem] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
+  const [view, setView] = useState('grid'); // grid | list
+
+  // Batch-tag selection
+  const [selectMode, setSelectMode] = useState(false);
+  const [tagSelection, setTagSelection] = useState([]);
+  const [showBatchTag, setShowBatchTag] = useState(false);
+
+  useEffect(() => {
+    let loadedOnce = false;
+    // onAuthStateChange fires INITIAL_SESSION with the current session on
+    // subscribe, so it replaces a separate getSession() call. We deliberately
+    // IGNORE TOKEN_REFRESHED / USER_UPDATED — those fire on every window-focus
+    // and token rotation, and were causing the whole page to reload (and jump
+    // to top) whenever you scrolled away and came back.
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
+      setUser(session?.user || null);
+      if (session?.user) {
+        loadProfile(session.user.id);
+        loadData(loadedOnce);   // first load shows skeleton; any later one is silent
+        loadedOnce = true;
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  // Realtime subscription for ratings (keyed on user id so it doesn't
+  // resubscribe when the session object identity changes on token refresh)
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase.channel('realtime-ratings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ratings' }, () => {
+        loadData(true);
+      })
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [user?.id]);
+
+  const loadProfile = async (userId) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    setProfile(data);
+  };
+
+  // silent=true keeps the grid mounted (no skeleton swap) so scroll position is
+  // preserved when a modal closes or a rating/comment triggers a refresh.
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
+    const [roomsRes, catsRes, itemsRes, ratingsRes, itemRoomsRes, itemCatsRes, profilesRes] = await Promise.all([
+      supabase.from('rooms').select('*').order('display_order'),
+      supabase.from('categories').select('*').order('display_order'),
+      supabase.from('items').select('*').order('created_at', { ascending: false }),
+      supabase.from('ratings').select('*, profiles(name)'),
+      supabase.from('item_rooms').select('*'),
+      supabase.from('item_categories').select('*'),
+      supabase.from('profiles').select('id, name, avatar_color'),
+    ]);
+
+    setRooms(roomsRes.data || []);
+    setCategories(catsRes.data || []);
+    setAllProfiles(profilesRes.data || []);
+
+    const ratingsMap = {};
+    (ratingsRes.data || []).forEach(r => {
+      if (!ratingsMap[r.item_id]) ratingsMap[r.item_id] = [];
+      ratingsMap[r.item_id].push({ ...r, user_name: r.profiles?.name });
+    });
+
+    const roomsMap = {};
+    (itemRoomsRes.data || []).forEach(ir => {
+      if (!roomsMap[ir.item_id]) roomsMap[ir.item_id] = [];
+      roomsMap[ir.item_id].push(ir.room_id);
+    });
+
+    const catsMap = {};
+    (itemCatsRes.data || []).forEach(ic => {
+      if (!catsMap[ic.item_id]) catsMap[ic.item_id] = [];
+      catsMap[ic.item_id].push(ic.category_id);
+    });
+
+    const enrichedItems = (itemsRes.data || []).map(item => ({
+      ...item,
+      ratings: ratingsMap[item.id] || [],
+      room_ids: roomsMap[item.id] || [],
+      category_ids: catsMap[item.id] || [],
+    }));
+
+    setItems(enrichedItems);
+    if (!silent) setLoading(false);
+  };
+
+  // Deep-link: open an item if the URL has ?item=<id> (used by email links)
+  const deepLinkedRef = useRef(false);
+  useEffect(() => {
+    if (deepLinkedRef.current || !items.length) return;
+    const id = new URLSearchParams(window.location.search).get('item');
+    if (id) {
+      const it = items.find(i => i.id === id);
+      if (it) { setDetailItem(it); deepLinkedRef.current = true; }
+    }
+  }, [items]);
+
+  const handleRate = async (itemId, rating) => {
+    const { data: existing } = await supabase.from('ratings')
+      .select('id').eq('item_id', itemId).eq('user_id', user.id).single();
+
+    if (existing) {
+      await supabase.from('ratings').update({ rating, updated_at: new Date().toISOString() }).eq('id', existing.id);
+    } else {
+      await supabase.from('ratings').insert({ item_id: itemId, user_id: user.id, rating });
+    }
+    loadData(true);
+  };
+
+  const toggleSelect = (itemId) => {
+    setSelectedItems(prev =>
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : prev.length < 4 ? [...prev, itemId] : prev
+    );
+  };
+
+  const toggleTagSelect = useCallback((itemId) => {
+    setTagSelection(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
+  }, []);
+
+  const exitSelectMode = () => { setSelectMode(false); setTagSelection([]); };
+
+  // Filtered & sorted items
+  const filteredItems = useMemo(() => {
+    let result = items;
+    if (filterRoom) result = result.filter(i => i.room_ids.includes(filterRoom));
+    if (filterCategory) result = result.filter(i => i.category_ids.includes(filterCategory));
+    if (filterType) result = result.filter(i => i.content_type === filterType);
+    if (search) result = result.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
+
+    if (sortBy === 'oldest') {
+      result = [...result].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (sortBy === 'highest') {
+      result = [...result].sort((a,b) => {
+        const avgA = a.ratings.length ? a.ratings.reduce((s,r)=>s+r.rating,0)/a.ratings.length : 0;
+        const avgB = b.ratings.length ? b.ratings.reduce((s,r)=>s+r.rating,0)/b.ratings.length : 0;
+        return avgB - avgA;
+      });
+    } else if (sortBy === 'most_voted') {
+      result = [...result].sort((a,b) => b.ratings.length - a.ratings.length);
+    } else if (sortBy === 'unrated') {
+      result = [...result].sort((a,b) => {
+        const aHasMine = a.ratings.some(r => r.user_id === user?.id);
+        const bHasMine = b.ratings.some(r => r.user_id === user?.id);
+        if (!aHasMine && bHasMine) return -1;
+        if (aHasMine && !bHasMine) return 1;
+        return 0;
+      });
+    }
+    return result;
+  }, [items, filterRoom, filterCategory, filterType, search, sortBy, user]);
+
+  const unsortedCount = items.filter(i => i.room_ids.length === 0 && i.category_ids.length === 0).length;
+  const ratedCount = items.filter(i => i.ratings.some(r => r.user_id === user?.id)).length;
+  const activeFilterCount = (filterRoom ? 1 : 0) + (filterCategory ? 1 : 0) + (filterType ? 1 : 0);
+  const clearFilters = () => { setFilterRoom(null); setFilterCategory(null); setFilterType(null); };
+
+  if (!user) return <LoginScreen supabase={supabase}/>;
+
+  return (
+    <div className="min-h-screen">
+      {/* HEADER */}
+      <header className="glass sticky top-0 z-40 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-xl md:text-2xl">
+              <span className="text-accent">Batra's</span> <span className="text-dark-100">Forever Home</span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Stats */}
+            <div className="hidden md:flex items-center gap-4 text-xs text-dark-400">
+              <span>{items.length} items</span>
+              <span>{ratedCount} rated by you</span>
+              {unsortedCount > 0 && <span className="text-accent">{unsortedCount} unsorted</span>}
+            </div>
+            {/* Notifications + theme */}
+            {user && <NotificationBell supabase={supabase} userId={user.id} items={items} onOpenItem={setDetailItem}/>}
+            <ThemeSwitcher/>
+            {/* Profile */}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                style={{backgroundColor: profile?.avatar_color || '#f97316'}}>
+                {profile?.name?.substring(0,2).toUpperCase() || '??'}
+              </div>
+              <button onClick={() => supabase.auth.signOut()} className="text-dark-400 hover:text-white text-xs hidden sm:inline">
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ACTION BAR */}
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          {/* Buttons — horizontally scrollable on mobile */}
+          <div className="flex gap-2 items-center overflow-x-auto no-scrollbar sm:flex-wrap sm:overflow-visible">
+            <button onClick={() => setShowAddItem(true)}
+              className="hidden sm:flex bg-accent hover:bg-accent-dark text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors items-center gap-1.5 flex-shrink-0">
+              + Add Item
+            </button>
+            <button onClick={() => setShowLeaderboard(true)}
+              className="bg-dark-700 hover:bg-dark-600 text-dark-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
+              🏆 Leaderboard
+            </button>
+            {!selectMode ? (
+              <button onClick={() => { setSelectMode(true); setSelectedItems([]); }}
+                className="bg-dark-700 hover:bg-dark-600 text-dark-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
+                🏷️ Select to tag
+              </button>
+            ) : (
+              <>
+                <span className="text-sm font-bold text-purple-400 px-1 flex-shrink-0">{tagSelection.length} selected</span>
+                <button onClick={() => setTagSelection(filteredItems.map(i => i.id))}
+                  className="bg-dark-700 hover:bg-dark-600 text-dark-200 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
+                  Select all ({filteredItems.length})
+                </button>
+                <button onClick={() => setTagSelection([])}
+                  className="bg-dark-700 hover:bg-dark-600 text-dark-200 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
+                  Clear
+                </button>
+                <button onClick={() => setShowBatchTag(true)} disabled={tagSelection.length === 0}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex-shrink-0">
+                  🏷️ Tag {tagSelection.length} item{tagSelection.length === 1 ? '' : 's'}
+                </button>
+                <button onClick={exitSelectMode} className="text-dark-400 hover:text-white text-sm flex-shrink-0 px-1">Done</button>
+              </>
+            )}
+            {!selectMode && selectedItems.length >= 2 && (
+              <button onClick={() => setShowCompare(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors animate-pulse flex-shrink-0">
+                ⚔️ Compare {selectedItems.length}
+              </button>
+            )}
+            {!selectMode && selectedItems.length > 0 && (
+              <button onClick={() => setSelectedItems([])} className="text-dark-400 hover:text-white text-sm flex-shrink-0 px-1">
+                Clear
+              </button>
+            )}
+          </div>
+
+          <div className="hidden sm:block sm:flex-1"/>
+
+          {/* Search + sort — full width on mobile */}
+          <div className="flex gap-2">
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search items…"
+              className="flex-1 sm:flex-none sm:w-48 bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:ring-1 focus:ring-accent"/>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+              className="bg-dark-800 border border-dark-700 rounded-lg px-3 py-2 text-sm text-dark-200 focus:outline-none focus:ring-1 focus:ring-accent">
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="highest">Highest rated</option>
+              <option value="most_voted">Most voted</option>
+              <option value="unrated">Unrated first</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* FILTERS */}
+      <div className="max-w-7xl mx-auto px-4 pb-4">
+        {/* Mobile: collapse filters behind a toggle to save vertical space */}
+        <div className="flex items-center justify-between mb-3 sm:hidden">
+          <button onClick={() => setFiltersOpen(o => !o)} className="fpill">
+            ⚙️ Filters
+            {activeFilterCount > 0 && <span className="ml-1 bg-accent text-white rounded-full px-1.5 py-0.5 text-[10px] leading-none">{activeFilterCount}</span>}
+            <span className="ml-0.5">{filtersOpen ? '▴' : '▾'}</span>
+          </button>
+          {activeFilterCount > 0 && (
+            <button onClick={clearFilters} className="text-xs text-dark-400 hover:text-accent font-medium">Clear all</button>
+          )}
+        </div>
+
+        <div className={`${filtersOpen ? 'block' : 'hidden'} sm:block space-y-3`}>
+          {/* Rooms */}
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-dark-500 mb-1.5">Room</p>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 sm:flex-wrap sm:overflow-visible">
+              <button onClick={() => setFilterRoom(null)} className={`fpill ${!filterRoom ? 'active' : ''}`}>All Rooms</button>
+              <button onClick={() => setFilterRoom('unsorted')} className={`fpill danger ${filterRoom === 'unsorted' ? 'active' : ''}`}>
+                📥 Unsorted <span className="cnt">{unsortedCount}</span>
+              </button>
+              {rooms.map(r => (
+                <button key={r.id} onClick={() => setFilterRoom(r.id === filterRoom ? null : r.id)}
+                  className={`fpill ${filterRoom === r.id ? 'active' : ''}`}>{r.icon} {r.name}</button>
+              ))}
+            </div>
+          </div>
+          {/* Categories */}
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-dark-500 mb-1.5">Category</p>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 sm:flex-wrap sm:overflow-visible">
+              <button onClick={() => setFilterCategory(null)} className={`fpill ${!filterCategory ? 'active' : ''}`}>All Categories</button>
+              {categories.map(c => (
+                <button key={c.id} onClick={() => setFilterCategory(c.id === filterCategory ? null : c.id)}
+                  className={`fpill ${filterCategory === c.id ? 'active' : ''}`}>{c.icon} {c.name}</button>
+              ))}
+            </div>
+          </div>
+          {/* Content type */}
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-dark-500 mb-1.5">Type</p>
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 sm:flex-wrap sm:overflow-visible">
+              <button onClick={() => setFilterType(null)} className={`fpill ${!filterType ? 'active' : ''}`}>All Types</button>
+              {Object.entries(CONTENT_ICONS).map(([k,v]) => {
+                const count = items.filter(i => i.content_type === k).length;
+                if (count === 0) return null;
+                return (
+                  <button key={k} onClick={() => setFilterType(k === filterType ? null : k)}
+                    className={`fpill ${filterType === k ? 'active' : ''}`}>{v} {k.replace('_',' ')} <span className="cnt">{count}</span></button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ITEMS GRID */}
+      <div className="max-w-7xl mx-auto px-4 pb-8">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-dark-400 text-sm">{filteredItems.length} items</p>
+          <p className="text-dark-500 text-xs">
+            {selectMode
+              ? 'Tap items to select • then "Tag N items" to apply rooms & categories'
+              : 'Click items to view details • Check boxes to compare'}
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {Array(10).fill(0).map((_,i) => (
+              <div key={i} className="rounded-xl overflow-hidden">
+                <div className="aspect-[4/3] shimmer"/>
+                <div className="p-3 space-y-2 bg-dark-800">
+                  <div className="h-4 shimmer rounded w-3/4"/>
+                  <div className="h-3 shimmer rounded w-1/2"/>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-4xl mb-4">🏠</p>
+            <p className="text-dark-400 text-lg">No items match your filters</p>
+            <p className="text-dark-500 text-sm mt-1">Try adjusting the room or category filter</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {filteredItems.map(item => (
+              <ItemCard key={item.id} item={item} rooms={rooms} categories={categories}
+                onRate={handleRate} currentUserId={user.id}
+                onSelect={toggleSelect} isSelected={selectedItems.includes(item.id)}
+                onOpenDetail={setDetailItem}
+                selectMode={selectMode}
+                inTagSelection={tagSelection.includes(item.id)}
+                onToggleTagSelect={toggleTagSelect}/>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* MODALS */}
+      {detailItem && (
+        <ItemDetail item={detailItem} rooms={rooms} categories={categories}
+          allRooms={rooms} allCategories={categories}
+          onClose={() => { setDetailItem(null); loadData(true); }}
+          onRate={handleRate} currentUserId={user.id}
+          currentUserName={profile?.name} profiles={allProfiles} supabase={supabase}/>
+      )}
+
+      {showCompare && (
+        <CompareView items={items.filter(i => selectedItems.includes(i.id))} onClose={() => setShowCompare(false)}/>
+      )}
+
+      {showLeaderboard && (
+        <LeaderboardView items={filteredItems} onClose={() => setShowLeaderboard(false)}/>
+      )}
+
+      {showAddItem && (
+        <AddItemModal onClose={() => setShowAddItem(false)} supabase={supabase}
+          rooms={rooms} categories={categories} onAdded={() => loadData(true)}/>
+      )}
+
+      {showBatchTag && (
+        <BatchTagModal itemIds={tagSelection} allRooms={rooms} allCategories={categories}
+          supabase={supabase} onClose={() => setShowBatchTag(false)}
+          onDone={() => { setShowBatchTag(false); exitSelectMode(); loadData(true); }}/>
+      )}
+
+      {/* Mobile floating Add button */}
+      {!selectMode && (
+        <button onClick={() => setShowAddItem(true)} aria-label="Add item"
+          className="sm:hidden fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-accent text-white flex items-center justify-center fab active:scale-95 transition-transform">
+          <span className="text-3xl font-light leading-none mb-0.5">+</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── ROOT APP ──────────────────────────────────────────────────
+function App() {
+  const [supabase, setSupabase] = useState(null);
+
+  useEffect(() => {
+    // Auto-connect with hardcoded credentials
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      setSupabase(sb);
+    }
+  }, []);
+
+  if (!supabase) return <div className="min-h-screen flex items-center justify-center"><div className="shimmer w-16 h-16 rounded-full"/></div>;
+  return <MainApp supabase={supabase}/>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
