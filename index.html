@@ -912,61 +912,215 @@ function CompareView({ items, onClose }) {
 }
 
 // ─── LEADERBOARD VIEW ──────────────────────────────────────────
-function LeaderboardView({ items, onClose }) {
-  const sorted = [...items]
-    .map(item => ({
-      ...item,
-      avgRating: item.ratings?.length > 0
-        ? item.ratings.reduce((s,r) => s+r.rating, 0) / item.ratings.length : 0,
-      totalVotes: item.ratings?.filter(r => r.rating > 0).length || 0
-    }))
-    .filter(i => i.totalVotes > 0)
-    .sort((a,b) => b.avgRating - a.avgRating || b.totalVotes - a.totalVotes);
+// Consensus-weighted scoring. A 4.5 agreed by all four beats a lone 5★.
+// Bayesian average pulls thin-vote items toward the neutral mean (3), then a
+// small agreement bonus rewards low spread. Returns enriched item + signals.
+const LB_PRIOR_MEAN = 3, LB_PRIOR_WEIGHT = 2;
+function scoreLeaderboardItem(item) {
+  const rs = (item.ratings || []).filter(r => r.rating > 0);
+  const n = rs.length;
+  const sum = rs.reduce((s, r) => s + r.rating, 0);
+  const avg = n ? sum / n : 0;
+  const bayes = (sum + LB_PRIOR_MEAN * LB_PRIOR_WEIGHT) / (n + LB_PRIOR_WEIGHT);
+  const variance = n ? rs.reduce((s, r) => s + (r.rating - avg) ** 2, 0) / n : 0;
+  const stdev = Math.sqrt(variance);
+  const agreement = n >= 2 ? Math.max(0, 1 - stdev / 2) : 0.5;
+  const score = bayes + 0.3 * agreement;
+  const ratingByName = {};
+  rs.forEach(r => { ratingByName[r.user_name] = r.rating; });
+  const ratings = rs.map(r => r.rating);
+  const spread = n >= 2 ? Math.max(...ratings) - Math.min(...ratings) : 0;
+  const minR = n ? Math.min(...ratings) : 0;
+  return {
+    ...item, n, avg, bayes, stdev, agreement, score, spread, ratingByName,
+    familyFavorite: n === FAMILY.length && minR >= 4,
+    contested: n >= 3 && spread >= 2,
+    needsVotes: n < FAMILY.length,
+  };
+}
 
-  const medals = ['🥇','🥈','🥉'];
+function LeaderboardView({ items, rooms, categories, decisions, onClose, onOpenDetail, onSetWinner, onClearWinner }) {
+  const roomsWithItems = rooms.filter(r => items.some(it => it.room_ids.includes(r.id)));
+  const [activeRoom, setActiveRoom] = useState(roomsWithItems[0]?.id ?? null);
+  const [expanded, setExpanded] = useState({}); // categoryId -> show all
+
+  const room = rooms.find(r => r.id === activeRoom);
+  const roomItems = items.filter(it => it.room_ids.includes(activeRoom));
+
+  // Category sections present in this room, plus an Uncategorized bucket.
+  const catGroups = categories
+    .map(cat => ({ cat, list: roomItems.filter(it => it.category_ids.includes(cat.id)) }))
+    .filter(g => g.list.length > 0);
+  const uncategorized = roomItems.filter(it => it.category_ids.length === 0);
+
+  const decidedCount = catGroups.filter(g => decisions[`${activeRoom}-${g.cat.id}`]).length;
+
+  const buildSection = (list) => {
+    const scored = list.map(scoreLeaderboardItem).sort((a, b) => b.score - a.score || b.n - a.n);
+    const topByPerson = {}; // person name -> winning itemId within this group
+    FAMILY.forEach(f => {
+      let best = null, bestR = 0;
+      scored.forEach(it => {
+        const r = it.ratingByName[f.name];
+        if (r && r > bestR) { bestR = r; best = it.id; }
+      });
+      if (best) topByPerson[f.name] = best;
+    });
+    return { scored, topByPerson };
+  };
+
+  const Badge = ({ color, bg, children }) => (
+    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+      style={{ color, backgroundColor: bg }}>{children}</span>
+  );
+
+  const ItemRow = ({ it, rank, isWinner, catId, topByPerson }) => {
+    const thumb = getThumbUrl(it);
+    return (
+      <div className={`glass rounded-xl p-3 flex items-center gap-3 ${isWinner ? 'border border-amber-400/60' : ''}`}>
+        <span className="w-7 text-center flex-shrink-0">
+          {isWinner ? <span className="text-lg">👑</span>
+            : <span className="text-sm font-bold text-dark-400">#{rank}</span>}
+        </span>
+        <button onClick={() => onOpenDetail && onOpenDetail(it)}
+          className="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {thumb ? <img src={thumb} alt="" loading="lazy" className="w-full h-full object-cover"/>
+            : <span>{CONTENT_ICONS[it.content_type]}</span>}
+        </button>
+        <div className="flex-1 min-w-0">
+          <button onClick={() => onOpenDetail && onOpenDetail(it)} className="text-left w-full">
+            <h4 className="font-medium text-sm truncate hover:text-accent transition-colors">{it.title}</h4>
+          </button>
+          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+            {isWinner && <Badge color="#78350f" bg="#fbbf24">Winner</Badge>}
+            {it.familyFavorite && <Badge color="#831843" bg="#fbcfe8">💖 Family fave</Badge>}
+            {it.contested && <Badge color="#7c2d12" bg="#fed7aa">⚡ Contested</Badge>}
+            {it.needsVotes && <Badge color="#1e3a5f" bg="#bae6fd">🗳 Needs votes</Badge>}
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-1">
+            {FAMILY.map(f => {
+              const r = it.ratingByName[f.name];
+              const isTop = topByPerson[f.name] === it.id;
+              if (!r) return (
+                <span key={f.name} className="text-[11px] text-dark-500" title={`${f.name} hasn't voted`}>
+                  {f.initials}:–
+                </span>
+              );
+              return (
+                <span key={f.name} className="text-[11px] font-medium inline-flex items-center gap-0.5"
+                  style={{ color: f.color }} title={`${f.name}: ${r}★${isTop ? ' — their top pick here' : ''}`}>
+                  {isTop && <span>⭐</span>}{f.initials}:{r}★
+                </span>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <div className="text-right">
+            <p className="text-lg font-bold text-accent leading-none">★ {it.n ? it.avg.toFixed(1) : '–'}</p>
+            <p className="text-[10px] text-dark-400">{it.n} {it.n === 1 ? 'vote' : 'votes'}</p>
+          </div>
+          {catId != null && (isWinner ? (
+            <button onClick={() => onClearWinner(activeRoom, catId)}
+              className="text-[10px] text-dark-400 hover:text-white underline">Unset</button>
+          ) : (
+            <button onClick={() => onSetWinner(activeRoom, catId, it.id)}
+              className="text-[10px] px-2 py-0.5 rounded-full bg-dark-700 hover:bg-amber-400/20 text-dark-200 hover:text-amber-300 transition-colors">
+              Make winner
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const Section = ({ cat, list }) => {
+    const catId = cat ? cat.id : null;
+    const { scored, topByPerson } = buildSection(list);
+    const winnerId = catId != null ? decisions[`${activeRoom}-${catId}`]?.item_id : null;
+    const winnerName = catId != null ? decisions[`${activeRoom}-${catId}`]?.decided_by_name : null;
+    const winner = winnerId ? scored.find(s => s.id === winnerId) : null;
+    const rest = scored.filter(s => s.id !== winnerId);
+    const isOpen = expanded[catId == null ? 'uncat' : catId];
+    const shown = isOpen ? rest : rest.slice(0, 5);
+
+    return (
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2 px-1">
+          <h3 className="font-display text-base text-dark-100 flex items-center gap-2">
+            <span>{cat ? (cat.icon || '🏷') : '📭'}</span>
+            {cat ? cat.name : 'Uncategorized'}
+            <span className="text-xs text-dark-500 font-sans">{list.length}</span>
+          </h3>
+          {winner && <span className="text-[11px] text-amber-300">👑 decided{winnerName ? ` · ${winnerName}` : ''}</span>}
+        </div>
+        <div className="space-y-2">
+          {winner && <ItemRow it={winner} isWinner catId={catId} topByPerson={topByPerson}/>}
+          {shown.map((it, i) => (
+            <ItemRow key={it.id} it={it} rank={i + 1} catId={catId} topByPerson={topByPerson}/>
+          ))}
+        </div>
+        {rest.length > 5 && (
+          <button onClick={() => setExpanded(e => ({ ...e, [catId == null ? 'uncat' : catId]: !isOpen }))}
+            className="text-xs text-accent mt-2 px-1 hover:underline">
+            {isOpen ? 'Show less' : `Show ${rest.length - 5} more`}
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div className="fixed inset-0 z-50 bg-dark-900/95 backdrop-blur-sm overflow-y-auto p-4" onClick={onClose}>
-      <div className="max-w-2xl mx-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 z-40 bg-dark-900/95 backdrop-blur-sm overflow-y-auto p-4" onClick={onClose}>
+      <div className="max-w-2xl mx-auto pb-12" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-1 sticky top-0 -mx-4 px-4 py-2 bg-dark-900/90 backdrop-blur-sm z-10">
           <h2 className="font-display text-2xl text-accent">🏆 Leaderboard</h2>
-          <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl">&times;</button>
+          <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl" aria-label="Close">&times;</button>
         </div>
+        <p className="text-xs text-dark-400 mb-4">Top picks per room &amp; category, ranked by family consensus — more votes and closer agreement rank higher. Mark a winner once you've decided.</p>
 
-        {sorted.length === 0 ? (
-          <p className="text-dark-400 text-center py-8">No rated items yet. Start voting!</p>
+        {roomsWithItems.length === 0 ? (
+          <p className="text-dark-400 text-center py-12">No items have been tagged to a room yet. Tag items by room to build the leaderboard.</p>
         ) : (
-          <div className="space-y-2">
-            {sorted.map((item, i) => (
-              <div key={item.id} className={`glass rounded-xl p-4 flex items-center gap-4 ${i < 3 ? 'border border-accent/30' : ''}`}>
-                <span className="text-2xl w-8 text-center">{i < 3 ? medals[i] : `#${i+1}`}</span>
-                <div className="w-12 h-12 rounded-lg bg-dark-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {(() => {
-                    const pUrl = getPhotoUrl(item);
-                    if (pUrl) return <img src={pUrl} alt="" className="w-full h-full object-cover"/>;
-                    return <span>{CONTENT_ICONS[item.content_type]}</span>;
-                  })()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm truncate">{item.title}</h3>
-                  <div className="flex gap-2 mt-0.5">
-                    {FAMILY.map(f => {
-                      const r = item.ratings?.find(r => r.user_name === f.name);
-                      return r ? (
-                        <span key={f.name} className="text-xs font-medium" style={{color: f.color}}>
-                          {f.initials}:{r.rating}★
-                        </span>
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-accent">★ {item.avgRating.toFixed(1)}</p>
-                  <p className="text-xs text-dark-400">{item.totalVotes} votes</p>
-                </div>
+          <>
+            {/* Room selector */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-4 -mx-1 px-1">
+              {roomsWithItems.map(r => {
+                const cnt = items.filter(it => it.room_ids.includes(r.id)).length;
+                const dec = categories.filter(c => decisions[`${r.id}-${c.id}`]).length;
+                return (
+                  <button key={r.id} onClick={() => setActiveRoom(r.id)}
+                    className={`fpill flex-shrink-0 ${activeRoom === r.id ? 'active' : ''}`}>
+                    {r.icon || '🏠'} {r.name} <span className="cnt">{cnt}</span>
+                    {dec > 0 && <span className="ml-1 text-amber-300">👑{dec}</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Room summary + decided/undecided progress */}
+            <div className="mb-5 px-1">
+              <div className="flex items-center justify-between text-xs text-dark-400 mb-1.5">
+                <span className="text-dark-200 font-medium">{room?.name}</span>
+                <span className="text-amber-300">
+                  {decidedCount} of {catGroups.length} categor{catGroups.length === 1 ? 'y' : 'ies'} decided
+                </span>
               </div>
-            ))}
-          </div>
+              <div className="h-1.5 rounded-full bg-dark-700 overflow-hidden">
+                <div className="h-full bg-amber-400 rounded-full transition-all duration-300"
+                  style={{ width: `${catGroups.length ? (decidedCount / catGroups.length) * 100 : 0}%` }}/>
+              </div>
+            </div>
+
+            {catGroups.length === 0 && uncategorized.length === 0 ? (
+              <p className="text-dark-400 text-center py-8">No items in this room yet.</p>
+            ) : (
+              <>
+                {catGroups.map(g => <Section key={g.cat.id} cat={g.cat} list={g.list}/>)}
+                {uncategorized.length > 0 && <Section cat={null} list={uncategorized}/>}
+              </>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -1333,6 +1487,7 @@ function MainApp({ supabase }) {
   const [rooms, setRooms] = useState([]);
   const [categories, setCategories] = useState([]);
   const [allProfiles, setAllProfiles] = useState([]);
+  const [decisions, setDecisions] = useState({}); // `${roomId}-${catId}` -> {item_id, decided_by_name}
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false); // mobile collapse
 
@@ -1385,6 +1540,9 @@ function MainApp({ supabase }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'ratings' }, () => {
         loadData(true);
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'decisions' }, () => {
+        loadData(true);
+      })
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [user?.id]);
@@ -1398,7 +1556,7 @@ function MainApp({ supabase }) {
   // preserved when a modal closes or a rating/comment triggers a refresh.
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
-    const [roomsRes, catsRes, itemsRes, ratingsRes, itemRoomsRes, itemCatsRes, profilesRes] = await Promise.all([
+    const [roomsRes, catsRes, itemsRes, ratingsRes, itemRoomsRes, itemCatsRes, profilesRes, decisionsRes] = await Promise.all([
       supabase.from('rooms').select('*').order('display_order'),
       supabase.from('categories').select('*').order('display_order'),
       supabase.from('items').select('*').order('created_at', { ascending: false }),
@@ -1406,11 +1564,18 @@ function MainApp({ supabase }) {
       supabase.from('item_rooms').select('*'),
       supabase.from('item_categories').select('*'),
       supabase.from('profiles').select('id, name, avatar_color'),
+      supabase.from('decisions').select('*'),
     ]);
 
     setRooms(roomsRes.data || []);
     setCategories(catsRes.data || []);
     setAllProfiles(profilesRes.data || []);
+
+    const decisionsMap = {};
+    (decisionsRes.data || []).forEach(d => {
+      decisionsMap[`${d.room_id}-${d.category_id}`] = { item_id: d.item_id, decided_by_name: d.decided_by_name };
+    });
+    setDecisions(decisionsMap);
 
     const ratingsMap = {};
     (ratingsRes.data || []).forEach(r => {
@@ -1471,6 +1636,28 @@ function MainApp({ supabase }) {
       { onConflict: 'item_id,user_id' }
     );
     if (error) console.error('Rating save failed:', error.message);
+  };
+
+  // Mark/clear the chosen winner for a room×category. Optimistic + upsert on
+  // the (room_id, category_id) unique key so re-deciding overwrites cleanly.
+  const handleSetWinner = async (roomId, categoryId, itemId) => {
+    if (!user?.id) return;
+    const key = `${roomId}-${categoryId}`;
+    setDecisions(prev => ({ ...prev, [key]: { item_id: itemId, decided_by_name: profile?.name } }));
+    const { error } = await supabase.from('decisions').upsert(
+      { room_id: roomId, category_id: categoryId, item_id: itemId,
+        decided_by: user.id, decided_by_name: profile?.name, updated_at: new Date().toISOString() },
+      { onConflict: 'room_id,category_id' }
+    );
+    if (error) console.error('Set winner failed:', error.message);
+  };
+
+  const handleClearWinner = async (roomId, categoryId) => {
+    const key = `${roomId}-${categoryId}`;
+    setDecisions(prev => { const next = { ...prev }; delete next[key]; return next; });
+    const { error } = await supabase.from('decisions').delete()
+      .eq('room_id', roomId).eq('category_id', categoryId);
+    if (error) console.error('Clear winner failed:', error.message);
   };
 
   const toggleSelect = (itemId) => {
@@ -1740,7 +1927,9 @@ function MainApp({ supabase }) {
       )}
 
       {showLeaderboard && (
-        <LeaderboardView items={filteredItems} onClose={() => setShowLeaderboard(false)}/>
+        <LeaderboardView items={items} rooms={rooms} categories={categories} decisions={decisions}
+          onClose={() => setShowLeaderboard(false)} onOpenDetail={setDetailItem}
+          onSetWinner={handleSetWinner} onClearWinner={handleClearWinner}/>
       )}
 
       {showAddItem && (
