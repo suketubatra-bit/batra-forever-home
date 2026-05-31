@@ -145,13 +145,15 @@ function getEmbedUrl(item) {
   const url = item.url;
   if (item.content_type === 'instagram_reel') {
     const m = url.match(/\/reel\/([^/?]+)/);
-    // NON-captioned embed: shows the media (and carousel arrows) only — no caption
-    // or comments block, so it stays short and the modal scroll flows to OUR comments.
-    return m ? `https://www.instagram.com/reel/${m[1]}/embed/` : null;
+    // CAPTIONED embed: this is the full interactive player — the reel video plays
+    // INLINE. The bare /embed/ (non-captioned) form renders only a static cover with
+    // a play button that redirects to instagram.com, so we must keep /captioned/ for
+    // playback. It's taller (adds a caption block) but InstaEmbed auto-sizes to it.
+    return m ? `https://www.instagram.com/reel/${m[1]}/embed/captioned/` : null;
   }
   if (item.content_type === 'instagram_post') {
     const m = url.match(/\/p\/([^/?]+)/);
-    return m ? `https://www.instagram.com/p/${m[1]}/embed/` : null;
+    return m ? `https://www.instagram.com/p/${m[1]}/embed/captioned/` : null;
   }
   if (item.content_type === 'youtube') {
     const m = url.match(/shorts\/([^/?]+)/) || url.match(/(?:v=|youtu\.be\/)([^/?&]+)/);
@@ -219,8 +221,9 @@ function LazyEmbed({ src, className = '', style = {} }) {
 // Instagram embed that auto-sizes to its REAL content height. The IG embed
 // page posts a {type:'MEASURE',details:{height}} message to the parent; we
 // listen for it and size the iframe exactly, so the media is never cut off and
-// there's no inner scrollbar. (Caption/comments are already excluded via the
-// non-captioned embed URL, so this is just the media + carousel.)
+// there's no inner scrollbar. Uses the /embed/captioned/ URL (see getEmbedUrl)
+// because that form plays the reel video inline; the height grows to fit the
+// caption block, which the MEASURE message handles automatically.
 function InstaEmbed({ src, type }) {
   const [h, setH] = useState(type === 'instagram_reel' ? 640 : 560);
   useEffect(() => {
