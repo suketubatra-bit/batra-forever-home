@@ -787,6 +787,42 @@ function ItemDetail({ item, rooms, categories, allRooms, allCategories, onClose,
       );
     }
     if (pUrl) return <img src={pUrl} alt={item.title} className="max-w-full max-h-[80vh] lg:max-h-full object-contain rounded-lg"/>;
+    // Website links: live in-app browser when the site allows framing (phone-width
+    // so responsive sites show their mobile layout); otherwise a rich preview card.
+    if (item.content_type === 'website' && item.url) {
+      const href = item.url.startsWith('http') ? item.url : 'https://' + item.url;
+      if (item.embeddable) {
+        return (
+          <div className="w-full max-w-[430px] flex flex-col gap-2">
+            <a href={href} target="_blank" rel="noopener noreferrer"
+              className="self-end text-xs text-accent hover:text-accent-light font-medium">Open full site ↗</a>
+            <div className="rounded-[2rem] border-4 border-dark-700 overflow-hidden bg-white shadow-xl">
+              <iframe src={href} title={item.title}
+                className="w-full h-[74vh] lg:h-[80vh] border-0 bg-white"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-popups-to-escape-sandbox"
+                referrerPolicy="no-referrer"/>
+            </div>
+          </div>
+        );
+      }
+      const thumb = item.thumbnail_url;
+      return (
+        <div className="w-full max-w-md rounded-xl overflow-hidden bg-dark-800 border border-dark-700">
+          {thumb
+            ? <img src={thumb} alt={item.title} className="w-full max-h-[58vh] object-cover"/>
+            : <div className="w-full aspect-[4/3] flex items-center justify-center text-6xl opacity-30 bg-gradient-to-br from-dark-700 to-dark-800">🌐</div>}
+          <div className="p-4 space-y-3">
+            <p className="text-sm text-dark-100 font-medium">{item.title}</p>
+            {item.description && <p className="text-xs text-dark-400" style={{display:'-webkit-box',WebkitLineClamp:3,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{item.description}</p>}
+            <a href={href} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-accent hover:bg-accent-dark text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors">
+              Open in browser ↗
+            </a>
+            <p className="text-[11px] text-dark-500">This site blocks in-app embedding, so it opens in a new tab.</p>
+          </div>
+        </div>
+      );
+    }
     return <div className="text-dark-500 text-sm p-8">No preview available</div>;
   })();
 
