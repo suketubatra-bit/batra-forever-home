@@ -60,6 +60,21 @@ tailwind.config = {
   html[data-accent="violet"]{--accent:139 92 246;--accent-light:167 139 250;--accent-dark:124 58 237;}
   html[data-accent="rose"]  {--accent:244 63 94;--accent-light:251 113 133;--accent-dark:225 29 72;}
 
+  /* Daylight contrast fix: `text-white` is a fixed colour and doesn't flip with
+     the theme, so on light surfaces it vanished. In light mode, darken white text
+     by default, then RE-whiten it only where it sits on a saturated background
+     (accent buttons, inline-coloured avatars, black media) so those stay legible. */
+  html.theme-light .text-white { color:#0f172a; }
+  html.theme-light .bg-accent .text-white,
+  html.theme-light .bg-accent.text-white,
+  html.theme-light .bg-accent-dark .text-white,
+  html.theme-light .bg-accent-dark.text-white,
+  html.theme-light .bg-black .text-white,
+  html.theme-light [style*="background"].text-white,
+  html.theme-light [style*="background"] .text-white { color:#fff; }
+  /* hover:text-white is used on neutral icon buttons (e.g. × close) → keep dark on hover in light mode */
+  html.theme-light .hover\:text-white:hover { color:#0f172a; }
+
   * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--scroll-track); }
@@ -144,6 +159,45 @@ const CONTENT_ICONS = {
 };
 
 const SUPABASE_STORAGE = SUPABASE_URL + '/storage/v1/object/public/photos/';
+
+// Self-contained floor plans — drawn in HTML/CSS (no image file needed) from the
+// project plan booklet, with measurements baked in. l/t/w/h are % of a portrait
+// box. A tile is CLICKABLE when its `room` (or name) matches a DB room; tiles
+// with context:true are greyed, non-interactive (service spaces / neighbours).
+// Three panels: Basement (left), Residence (centre), Terrace (right).
+const FLOOR_PLAN = [
+  { name: "Balcony (Front)",  dim: "5'0\" wide",      l: 6,  t: 3,  w: 84, h: 5  },
+  { name: "Suketu's Bedroom", dim: "10'11\"×13'10\"", l: 6,  t: 9,  w: 30, h: 18 },
+  { name: "Dining",           dim: "10'0\"×18'3\"",   l: 38, t: 9,  w: 24, h: 22 },
+  { name: "Kitchen",          dim: "10'8\"×10'5\"",   l: 64, t: 9,  w: 26, h: 13 },
+  { label: "Staircase", context: true,                l: 64, t: 23, w: 26, h: 12 },
+  { name: "Suketu's Ensuite", dim: "",                l: 6,  t: 29, w: 16, h: 7  },
+  { label: "Lift", context: true,                     l: 24, t: 29, w: 12, h: 7  },
+  { name: "Drawing Room",     dim: "17'10\"×17'0\"",  l: 20, t: 38, w: 42, h: 22 },
+  { name: "Satvik's Ensuite", dim: "7'6\"×5'6\"",     l: 64, t: 45, w: 20, h: 7  },
+  { label: "Shaft", context: true,                    l: 84, t: 38, w: 7,  h: 7  },
+  { name: "Master Toilet",    dim: "6'0\"×8'0\"",     l: 6,  t: 63, w: 11, h: 16 },
+  { name: "Dressing Room",    dim: "6'0\"×5'10\"",    l: 18, t: 63, w: 16, h: 8  },
+  { name: "Master Bedroom",   dim: "13'3\"×14'3\"",   l: 35, t: 63, w: 25, h: 16 },
+  { name: "Satvik's Bedroom", dim: "12'0\"×14'6\"",   l: 62, t: 63, w: 28, h: 16 },
+  { name: "Balcony (Rear)",   dim: "5'0\" wide",      l: 6,  t: 81, w: 84, h: 5  },
+];
+const BASEMENT_PLAN = [
+  { name: "WC", context: true,                            l: 47, t: 5,  w: 9,  h: 7  },
+  { label: "Store 3", dim: "15'3\"×24'9\"", context: true,l: 5,  t: 5,  w: 40, h: 42 },
+  { name: "Store 4", dim: "16'6\"×10'5\"", room: "Basement", l: 47, t: 13, w: 48, h: 22 },
+  { label: "Staircase", context: true,                    l: 56, t: 37, w: 30, h: 16 },
+  { label: "Store 2", dim: "15'3\"×24'6\"", context: true,l: 5,  t: 50, w: 40, h: 45 },
+  { label: "Store 1", dim: "16'6\"×20'3\"", context: true,l: 56, t: 55, w: 39, h: 33 },
+  { name: "WC", context: true,                            l: 42, t: 88, w: 11, h: 7  },
+];
+const TERRACE_PLAN = [
+  { name: "Party Terrace 2", dim: "", room: "Terrace",    l: 7,  t: 4,  w: 86, h: 38 },
+  { label: "Staircase", context: true,                    l: 60, t: 44, w: 33, h: 13 },
+  { name: "Common Terrace", dim: "", room: "Terrace",     l: 28, t: 45, w: 28, h: 12 },
+  { label: "Lift", context: true,                         l: 60, t: 59, w: 16, h: 7  },
+  { name: "Party Terrace 1", dim: "", room: "Terrace",    l: 7,  t: 60, w: 86, h: 36 },
+];
 
 // ─── EMBED HELPERS ────────────────────────────────────────────
 function getEmbedUrl(item) {
@@ -1051,6 +1105,145 @@ function TrashView({ items, onClose, onRestore, onPurge }) {
   );
 }
 
+// ─── FLOOR PLAN VIEW ───────────────────────────────────────────
+// The real floor plan render with clickable room zones overlaid. Click a room
+// to see, per category, all the media tagged to that room.
+function FloorPlanView({ items, rooms, categories, onClose, onOpenDetail }) {
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [hoverRoom, setHoverRoom] = useState(null);
+
+  const roomByName = {};
+  rooms.forEach(r => { roomByName[r.name] = r; });
+
+  // Rooms drawn on any panel (residence/basement/terrace) → not shown as chips.
+  const planNames = new Set(
+    [...FLOOR_PLAN, ...BASEMENT_PLAN, ...TERRACE_PLAN]
+      .filter(h => !h.context)
+      .map(h => h.room || h.name)
+  );
+  const otherRooms = rooms.filter(r => !planNames.has(r.name));
+
+  const selectedRoom = rooms.find(r => r.id === selectedRoomId);
+  // Flat list of items in the room — naturally de-duplicated (one row per item),
+  // so an item with several category tags still appears only once.
+  const roomItems = selectedRoomId ? items.filter(i => i.room_ids.includes(selectedRoomId)) : [];
+
+  const Thumb = ({ it }) => {
+    const t = getThumbUrl(it);
+    return (
+      <button onClick={() => onOpenDetail && onOpenDetail(it)}
+        className="aspect-square rounded-lg overflow-hidden bg-dark-700 flex items-center justify-center hover:ring-2 hover:ring-accent transition-all">
+        {t ? <img src={t} alt="" loading="lazy" className="w-full h-full object-cover"/>
+          : <span className="text-2xl">{CONTENT_ICONS[it.content_type]}</span>}
+      </button>
+    );
+  };
+
+  // One drawn floor (title + tile list). Tiles resolve to a DB room via
+  // tile.room (falling back to tile.name); context:true tiles are inert.
+  const PlanPanel = ({ title, tiles, ratio, widthClass }) => (
+    <div className={`mx-auto ${widthClass}`}>
+      <p className="text-center text-xs uppercase tracking-[0.2em] text-dark-400 mb-2">{title}</p>
+      <div className="relative w-full select-none rounded-2xl bg-[#efeae3] border border-[#c5bcab] shadow-xl overflow-hidden"
+        style={{ aspectRatio: ratio }}>
+        {tiles.map((h, idx) => {
+          const r = h.context ? null : roomByName[h.room || h.name];
+          const active = r && selectedRoomId === r.id;
+          const tagged = r ? items.filter(i => i.room_ids.includes(r.id)).length : 0;
+          const label = h.label || h.name;
+          if (h.context) {
+            return (
+              <div key={idx} className="absolute flex items-center justify-center bg-[#e7e1d4] border border-[#c5bcab] rounded"
+                style={{ left: h.l + '%', top: h.t + '%', width: h.w + '%', height: h.h + '%' }}>
+                <span className="text-[7px] sm:text-[8px] font-medium text-[#9c9384] uppercase tracking-wide text-center leading-tight px-0.5">
+                  {label}{h.dim && <><br/>{h.dim}</>}
+                </span>
+              </div>
+            );
+          }
+          return (
+            <button key={idx}
+              onClick={() => r && setSelectedRoomId(r.id)}
+              onMouseEnter={() => setHoverRoom(label)} onMouseLeave={() => setHoverRoom(null)}
+              title={label}
+              className={`absolute rounded border flex flex-col items-center justify-center text-center px-0.5 transition-all ${active ? 'bg-accent text-white border-accent z-10 shadow-lg scale-[1.02]' : 'bg-[#d8cfc0] hover:bg-accent/30 text-[#433b2e] border-[#b9b0a0] hover:border-accent'}`}
+              style={{ left: h.l + '%', top: h.t + '%', width: h.w + '%', height: h.h + '%' }}>
+              <span className="text-[8px] sm:text-[10px] font-bold leading-tight">{label}</span>
+              {h.dim && <span className={`text-[7px] sm:text-[8px] leading-tight ${active ? 'text-white/90' : 'text-[#7c7263]'}`}>{h.dim}</span>}
+              {tagged > 0 && (
+                <span className={`mt-0.5 text-[7px] sm:text-[8px] font-bold rounded-full px-1 ${active ? 'bg-white/25 text-white' : 'bg-accent/20 text-accent'}`}>{tagged}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-40 bg-dark-900/95 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      <div className="min-h-full lg:h-screen lg:flex" onClick={e => e.stopPropagation()}>
+
+        {/* PLAN — left on desktop / top on mobile */}
+        <div className="lg:flex-1 lg:min-w-0 lg:h-screen lg:overflow-y-auto p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-display text-2xl text-accent">📐 Floor Plan</h2>
+            <button onClick={onClose} className="lg:hidden text-dark-400 hover:text-white text-2xl" aria-label="Close">&times;</button>
+          </div>
+          <p className="text-xs text-dark-400 mb-4">Tap a room to see the inspirations tagged to it. {hoverRoom && <span className="text-accent font-medium">{hoverRoom}</span>}</p>
+
+          {/* Three drawn floors — Basement (left), Residence (centre), Terrace
+              (right). Pure HTML/CSS, no image. Stacks vertically on mobile. */}
+          <div className="flex flex-col xl:flex-row xl:items-start xl:justify-center gap-6">
+            <PlanPanel title="Basement" tiles={BASEMENT_PLAN} ratio="100 / 150" widthClass="w-full max-w-[300px] xl:w-[230px] order-2 xl:order-1"/>
+            <PlanPanel title="Residence" tiles={FLOOR_PLAN} ratio="100 / 165" widthClass="w-full max-w-[460px] order-1 xl:order-2"/>
+            <PlanPanel title="Terrace" tiles={TERRACE_PLAN} ratio="100 / 150" widthClass="w-full max-w-[300px] xl:w-[230px] order-3"/>
+          </div>
+
+          {otherRooms.length > 0 && (
+            <div className="max-w-[680px] mx-auto mt-5">
+              <p className="text-[11px] uppercase tracking-wider text-dark-500 mb-1.5">Other areas</p>
+              <div className="flex flex-wrap gap-1.5">
+                {otherRooms.map(r => (
+                  <button key={r.id} onClick={() => setSelectedRoomId(r.id)}
+                    className={`fpill ${selectedRoomId === r.id ? 'active' : ''}`}>{r.icon} {r.name}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* DETAIL PANEL — right on desktop / below on mobile */}
+        <div className="lg:w-[380px] lg:flex-shrink-0 lg:h-screen lg:overflow-y-auto lg:border-l lg:border-dark-700 bg-dark-800/60 p-4">
+          <div className="hidden lg:flex justify-end mb-2">
+            <button onClick={onClose} className="text-dark-400 hover:text-white text-2xl" aria-label="Close">&times;</button>
+          </div>
+          {!selectedRoom ? (
+            <p className="text-dark-400 text-sm text-center py-12">Select a room to see its inspirations.</p>
+          ) : (
+            <>
+              <h3 className="font-display text-xl text-dark-100 mb-1">{selectedRoom.icon} {selectedRoom.name}</h3>
+              {selectedRoom.description && <p className="text-xs text-dark-500 mb-1">{selectedRoom.description}</p>}
+              {/* Flat, de-duplicated grid — each item shown once for the room,
+                  regardless of how many categories it's tagged with. */}
+              {roomItems.length === 0 ? (
+                <p className="text-dark-500 text-sm py-6">No inspirations tagged to this room yet.</p>
+              ) : (
+                <>
+                  <p className="text-xs text-dark-500 mb-3">{roomItems.length} {roomItems.length === 1 ? 'item' : 'items'}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {roomItems.map(it => <Thumb key={it.id} it={it}/>)}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LeaderboardView({ items, rooms, categories, decisions, onClose, onOpenDetail, onSetWinner, onClearWinner }) {
   const roomsWithItems = rooms.filter(r => items.some(it => it.room_ids.includes(r.id)));
   const [activeRoom, setActiveRoom] = useState(roomsWithItems[0]?.id ?? null);
@@ -1602,6 +1795,7 @@ function MainApp({ supabase }) {
   const [decisions, setDecisions] = useState({}); // `${roomId}-${catId}` -> {item_id, decided_by_name}
   const [trashed, setTrashed] = useState([]); // soft-deleted items (deleted_at set)
   const [showTrash, setShowTrash] = useState(false);
+  const [showFloorPlan, setShowFloorPlan] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false); // mobile collapse
 
@@ -1624,6 +1818,14 @@ function MainApp({ supabase }) {
   const [selectMode, setSelectMode] = useState(false);
   const [tagSelection, setTagSelection] = useState([]);
   const [showBatchTag, setShowBatchTag] = useState(false);
+
+  // Lock background scroll whenever any full-screen overlay/modal is open, so
+  // the grid beneath doesn't scroll behind it.
+  const anyModalOpen = !!(detailItem || showCompare || showLeaderboard || showFloorPlan || showTrash || showAddItem || showBatchTag);
+  useEffect(() => {
+    document.body.style.overflow = anyModalOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [anyModalOpen]);
 
   useEffect(() => {
     let loadedOnce = false;
@@ -1885,6 +2087,10 @@ function MainApp({ supabase }) {
               className="hidden sm:flex bg-accent hover:bg-accent-dark text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors items-center gap-1.5 flex-shrink-0">
               + Add Item
             </button>
+            <button onClick={() => setShowFloorPlan(true)}
+              className="bg-dark-700 hover:bg-dark-600 text-dark-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
+              📐 Floor Plan
+            </button>
             <button onClick={() => setShowLeaderboard(true)}
               className="bg-dark-700 hover:bg-dark-600 text-dark-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0">
               🏆 Leaderboard
@@ -2072,6 +2278,11 @@ function MainApp({ supabase }) {
       {showTrash && (
         <TrashView items={trashed} onClose={() => setShowTrash(false)}
           onRestore={handleRestoreItem} onPurge={handlePurgeItem}/>
+      )}
+
+      {showFloorPlan && (
+        <FloorPlanView items={items} rooms={rooms} categories={categories}
+          onClose={() => setShowFloorPlan(false)} onOpenDetail={setDetailItem}/>
       )}
 
       {showAddItem && (
