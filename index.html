@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Batra's Forever Home — Moodboard</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f1b16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Forever Home">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -134,6 +140,12 @@ tailwind.config = {
     } catch(e){}
   })();
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(e){console.warn('SW reg failed',e);}); });
+}
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); window.__bfhInstall = e; window.dispatchEvent(new Event('bfh-installable')); });
+</script>
 </head>
 <body class="dark bg-dark-900 text-dark-100 min-h-screen">
 <div id="root"></div>
@@ -145,6 +157,23 @@ const { useState, useEffect, useCallback, useMemo, useRef, createContext, useCon
 // SUPABASE CREDENTIALS (auto-configured)
 const SUPABASE_URL = 'https://hqyllywcdfulxjicmxnw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxeWxseXdjZGZ1bHhqaWNteG53Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMDY0MzYsImV4cCI6MjA5NTc4MjQzNn0.m0WMBVi1Z07gEP8yCSEbtyRO0tqUumFiE2Ru6szSZpo';
+
+// ─── PWA / WEB PUSH ────────────────────────────────────────────
+const VAPID_PUBLIC = 'BNBfIe9wEnhyQgc-TuOgAH7Zlqr7I9ZWKzlwye5sl77ZkQga2M4ImhMZM5wws_jIXaqpCXM8MHAqTkMRBD06NX4';
+function urlB64ToU8(b){ const pad='='.repeat((4-b.length%4)%4); const x=(b+pad).replace(/-/g,'+').replace(/_/g,'/'); const r=atob(x),a=new Uint8Array(r.length); for(let i=0;i<r.length;i++)a[i]=r.charCodeAt(i); return a; }
+async function getPushSub(){ if(!('serviceWorker' in navigator)||!('PushManager' in window))return null; const reg=await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }
+async function enablePush(supabase,userId){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)) throw new Error('Push is not supported on this browser.');
+  const perm=await Notification.requestPermission(); if(perm!=='granted') throw new Error('Notification permission was denied.');
+  const reg=await navigator.serviceWorker.ready; let sub=await reg.pushManager.getSubscription();
+  if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToU8(VAPID_PUBLIC)});
+  const j=sub.toJSON();
+  await supabase.from('push_subscriptions').delete().eq('endpoint',sub.endpoint);
+  await supabase.from('push_subscriptions').insert({user_id:userId,endpoint:sub.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,user_agent:navigator.userAgent});
+  return sub;
+}
+async function disablePush(supabase){ const sub=await getPushSub(); if(sub){ try{await supabase.from('push_subscriptions').delete().eq('endpoint',sub.endpoint);}catch(e){} try{await sub.unsubscribe();}catch(e){} } }
+async function sendTestPush(supabase){ const {data:{session}}=await supabase.auth.getSession(); const res=await fetch(SUPABASE_URL+'/functions/v1/send-push',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:JSON.stringify({title:'🏡 Test notification',body:'Push is working on this device!',url:location.href})}); return res.json(); }
 
 const FAMILY = [
   { name: 'Suketu', color: '#f97316', initials: 'SK' },
@@ -1791,6 +1820,99 @@ function ThemeSwitcher() {
   );
 }
 
+// ─── NOTIFICATION & APP SETTINGS ───────────────────────────────
+function NotificationSettings({ supabase, userId, onClose }) {
+  const [prefs, setPrefs] = useState({ daily_digest:true, weekly_digest:true, push_enabled:true, mention_email:true });
+  const [pushOn, setPushOn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [canInstall, setCanInstall] = useState(!!window.__bfhInstall);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const pushSupported = ('serviceWorker' in navigator) && ('PushManager' in window);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('notification_prefs').select('*').eq('user_id', userId).maybeSingle();
+      if (data) setPrefs(data);
+      try { const sub = await getPushSub(); setPushOn(!!sub); } catch(e){}
+    })();
+    const h = () => setCanInstall(true);
+    window.addEventListener('bfh-installable', h);
+    return () => window.removeEventListener('bfh-installable', h);
+  }, []);
+
+  const savePref = async (key, val) => {
+    setPrefs(p => ({ ...p, [key]: val }));
+    try { await supabase.from('notification_prefs').upsert({ user_id:userId, [key]:val, updated_at:new Date().toISOString() }, { onConflict:'user_id' }); }
+    catch(e){ setMsg('Could not save: ' + (e.message||e)); }
+  };
+  const togglePush = async () => {
+    setBusy(true); setMsg('');
+    try {
+      if (pushOn) { await disablePush(supabase); setPushOn(false); setMsg('Push turned off on this device.'); }
+      else { await enablePush(supabase, userId); setPushOn(true); await savePref('push_enabled', true); setMsg('Push enabled on this device.'); }
+    } catch(e){ setMsg(e.message || String(e)); }
+    setBusy(false);
+  };
+  const test = async () => {
+    setBusy(true); setMsg('Sending test...');
+    try { const r = await sendTestPush(supabase); setMsg(r && r.sent ? 'Sent! Check your notifications.' : ('No push sent (' + ((r&&r.reason)||'unknown') + '). Enable push first.')); }
+    catch(e){ setMsg(e.message || String(e)); }
+    setBusy(false);
+  };
+  const doInstall = async () => { const e = window.__bfhInstall; if (!e) return; e.prompt(); await e.userChoice; window.__bfhInstall = null; setCanInstall(false); };
+
+  const Toggle = ({label, desc, val, onChange}) => (
+    <div className="flex items-start justify-between gap-3 py-3 border-b border-dark-700/40">
+      <div><div className="text-sm font-medium text-dark-100">{label}</div><div className="text-xs text-dark-400 mt-0.5">{desc}</div></div>
+      <button onClick={() => onChange(!val)} className={`shrink-0 w-11 h-6 rounded-full transition-colors relative ${val?'bg-accent':'bg-dark-600'}`}>
+        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${val?'left-[22px]':'left-0.5'}`}/>
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 fade-in" onClick={onClose}>
+      <div className="bg-dark-800 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-dark-100">⚙️ Notifications</h2>
+          <button onClick={onClose} className="text-dark-400 hover:text-dark-100 text-xl leading-none">✕</button>
+        </div>
+
+        <div className="rounded-xl bg-dark-900/50 p-3 mb-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-dark-100">📱 Push on this device</div>
+              <div className="text-xs text-dark-400 mt-0.5">{pushSupported ? (pushOn ? 'On — instant alerts on this device.' : 'Instant alerts even when the app is closed.') : 'Not supported by this browser.'}</div>
+            </div>
+            {pushSupported && <button disabled={busy} onClick={togglePush} className={`shrink-0 px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50 ${pushOn?'bg-dark-600 text-dark-100':'bg-accent text-white'}`}>{pushOn?'Turn off':'Enable'}</button>}
+          </div>
+          {pushOn && <button disabled={busy} onClick={test} className="mt-2 text-xs text-accent hover:underline">Send a test notification</button>}
+          {isIOS && !installed && <div className="text-[11px] text-amber-400/90 mt-2 leading-snug">On iPhone: first tap Share → Add to Home Screen, then open the app from your Home Screen and enable push here.</div>}
+        </div>
+
+        {(canInstall || (isIOS && !installed)) && (
+          <div className="rounded-xl bg-dark-900/50 p-3 mb-3">
+            <div className="text-sm font-semibold text-dark-100 mb-1">⬇️ Install the app</div>
+            {canInstall
+              ? <button onClick={doInstall} className="px-3 py-1.5 rounded-lg text-sm font-medium bg-accent text-white">Add to Home Screen</button>
+              : <div className="text-xs text-dark-400 leading-snug">Tap the Share icon in your browser, then “Add to Home Screen”.</div>}
+          </div>
+        )}
+
+        <p className="text-[10px] uppercase tracking-widest text-dark-500 mt-4 mb-1">Email & alerts</p>
+        <Toggle label="Daily digest" desc="A morning email with the day's highlights, or 5 items waiting for your rating on quiet days." val={prefs.daily_digest} onChange={v=>savePref('daily_digest',v)}/>
+        <Toggle label="Weekly digest" desc="A Sunday recap of family favourites and everything added that week." val={prefs.weekly_digest} onChange={v=>savePref('weekly_digest',v)}/>
+        <Toggle label="Mention emails" desc="Email me when someone @tags me in a comment." val={prefs.mention_email} onChange={v=>savePref('mention_email',v)}/>
+        <Toggle label="Push notifications" desc="Allow push for this account (enable per device above)." val={prefs.push_enabled} onChange={v=>savePref('push_enabled',v)}/>
+
+        {msg && <div className="mt-3 text-xs text-dark-200 bg-dark-900/60 rounded-lg p-2">{msg}</div>}
+      </div>
+    </div>
+  );
+}
+
 // ─── NOTIFICATION BELL ─────────────────────────────────────────
 function NotificationBell({ supabase, userId, items, onOpenItem }) {
   const [notes, setNotes] = useState([]);
@@ -1903,6 +2025,7 @@ function MainApp({ supabase }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
+  const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [view, setView] = useState('grid'); // grid | list
 
   // Batch-tag selection
@@ -2154,6 +2277,7 @@ function MainApp({ supabase }) {
             </div>
             {/* Notifications + theme */}
             {user && <NotificationBell supabase={supabase} userId={user.id} items={items} onOpenItem={setDetailItem}/>}
+            {user && <button onClick={() => setShowNotifSettings(true)} title="Notifications & app settings" className="w-9 h-9 rounded-full glass flex items-center justify-center text-lg hover:scale-105 transition-transform">⚙️</button>}
             <ThemeSwitcher/>
             {/* Profile */}
             <div className="flex items-center gap-2">
@@ -2168,6 +2292,7 @@ function MainApp({ supabase }) {
           </div>
         </div>
       </header>
+      {showNotifSettings && user && <NotificationSettings supabase={supabase} userId={user.id} onClose={() => setShowNotifSettings(false)}/>}
 
       {/* ACTION BAR */}
       <div className="max-w-7xl mx-auto px-4 py-4">
